@@ -1,12 +1,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import AuthForm from '@/components/auth/AuthForm';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -41,10 +45,10 @@ const Navbar = () => {
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <a href="#" className="flex items-center">
+              <Link to="/" className="flex items-center">
                 <span className="text-2xl font-bold text-primary">BTEL</span>
                 <span className="ml-1 text-2xl font-bold text-accent">.</span>
-              </a>
+              </Link>
             </div>
 
             {/* Desktop Menu */}
@@ -73,12 +77,22 @@ const Navbar = () => {
               >
                 Contact
               </a>
-              <Button 
-                onClick={() => setIsLoginOpen(true)}
-                className="bg-accent hover:bg-accent/90 text-white font-medium"
-              >
-                Portal
-              </Button>
+              {user ? (
+                <Link to="/dashboard">
+                  <Button 
+                    className="bg-accent hover:bg-accent/90 text-white font-medium"
+                  >
+                    Dashboard
+                  </Button>
+                </Link>
+              ) : (
+                <Button 
+                  onClick={() => setIsLoginOpen(true)}
+                  className="bg-accent hover:bg-accent/90 text-white font-medium"
+                >
+                  Portal
+                </Button>
+              )}
             </div>
 
             {/* Mobile menu button */}
@@ -142,54 +156,36 @@ const Navbar = () => {
                 >
                   Contact
                 </a>
-                <Button 
-                  onClick={() => {
-                    setIsLoginOpen(true);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="bg-accent hover:bg-accent/90 text-white font-medium"
-                >
-                  Portal
-                </Button>
+                {user ? (
+                  <Link to="/dashboard">
+                    <Button 
+                      className="bg-accent hover:bg-accent/90 text-white font-medium"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Dashboard
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button 
+                    onClick={() => {
+                      setIsLoginOpen(true);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="bg-accent hover:bg-accent/90 text-white font-medium"
+                  >
+                    Portal
+                  </Button>
+                )}
               </div>
             </div>
           )}
         </div>
       </nav>
 
-      {/* Login Dialog */}
+      {/* Auth Dialog */}
       <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-primary">HRM Portal Login</DialogTitle>
-            <DialogDescription>
-              Enter your credentials to access the HRM system
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <label htmlFor="email" className="font-medium text-sm">Email</label>
-              <input 
-                id="email" 
-                type="email" 
-                className="border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent"
-                placeholder="Enter your email" 
-              />
-            </div>
-            <div className="grid gap-2">
-              <label htmlFor="password" className="font-medium text-sm">Password</label>
-              <input 
-                id="password" 
-                type="password" 
-                className="border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-accent"
-                placeholder="Enter your password" 
-              />
-            </div>
-            <Button className="w-full bg-primary hover:bg-primary/90 mt-2">Login</Button>
-            <div className="text-sm text-center text-gray-500">
-              <a href="#" className="text-accent hover:underline">Forgot password?</a>
-            </div>
-          </div>
+          <AuthForm />
         </DialogContent>
       </Dialog>
     </>
