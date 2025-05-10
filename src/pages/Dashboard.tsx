@@ -1,10 +1,10 @@
 
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, CalendarClock, ClipboardList, Settings } from 'lucide-react';
 
 const Dashboard = () => {
   const { user, loading, signOut } = useAuth();
@@ -27,8 +27,10 @@ const Dashboard = () => {
         <div className="container mx-auto px-4 md:px-6 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center">
-              <span className="text-2xl font-bold">BTEL</span>
-              <span className="ml-1 text-2xl font-bold text-accent">.</span>
+              <Link to="/">
+                <span className="text-2xl font-bold">BTEL</span>
+                <span className="ml-1 text-2xl font-bold text-accent">.</span>
+              </Link>
               <span className="ml-4 text-lg">Dashboard</span>
             </div>
             <Button variant="ghost" className="text-white hover:bg-primary/80" onClick={signOut}>
@@ -41,7 +43,7 @@ const Dashboard = () => {
 
       <div className="container mx-auto px-4 md:px-6 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">Welcome, {user.email}</h1>
+          <h1 className="text-3xl font-bold text-gray-800">Welcome, {user.user_metadata?.display_name || user.email}</h1>
           <p className="text-gray-600 mt-2">
             This is your employee dashboard where you can manage your tasks and attendance.
           </p>
@@ -60,14 +62,19 @@ const Dashboard = () => {
               <div className="space-y-2">
                 <p><span className="font-semibold">Email:</span> {user.email}</p>
                 <p><span className="font-semibold">ID:</span> {user.id.substring(0, 8)}...</p>
-                <Button variant="outline" className="mt-4 w-full">Edit Profile</Button>
+                <Link to="/profile">
+                  <Button variant="outline" className="mt-4 w-full">Edit Profile</Button>
+                </Link>
               </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Attendance</CardTitle>
+              <CardTitle className="flex items-center">
+                <CalendarClock className="mr-2 h-5 w-5 text-primary" />
+                Attendance
+              </CardTitle>
               <CardDescription>Track your work hours</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -84,7 +91,10 @@ const Dashboard = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Tasks</CardTitle>
+              <CardTitle className="flex items-center">
+                <ClipboardList className="mr-2 h-5 w-5 text-primary" />
+                Tasks
+              </CardTitle>
               <CardDescription>Your pending tasks</CardDescription>
             </CardHeader>
             <CardContent>
@@ -101,6 +111,15 @@ const Dashboard = () => {
               </div>
             </CardContent>
           </Card>
+        </div>
+        
+        <div className="mt-8 flex justify-center">
+          <Link to="/">
+            <Button variant="ghost" className="flex items-center">
+              <Settings className="mr-2 h-4 w-4" />
+              Account Settings
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

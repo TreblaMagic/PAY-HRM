@@ -22,36 +22,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check active sessions and set the user
-    const getSession = async () => {
-      setLoading(true);
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        console.error('Error fetching session:', error);
-        toast({
-          title: "Authentication Error",
-          description: error.message,
-          variant: "destructive",
-        });
-      }
-      
-      if (session) {
-        setSession(session);
-        setUser(session.user);
-      }
-      
-      setLoading(false);
-    };
-
-    getSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state change event:', event);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
     });
+
+    // THEN check for existing session
+    const initializeAuth = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error fetching session:', error);
+          toast({
+            title: "Authentication Error",
+            description: error.message,
+            variant: "destructive",
+          });
+        } else {
+          console.log('Initial session:', data.session ? 'exists' : 'none');
+          setSession(data.session);
+          setUser(data.session?.user ?? null);
+        }
+      } catch (err) {
+        console.error('Unexpected error during auth initialization:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
 
     return () => {
       subscription.unsubscribe();
@@ -60,8 +63,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      
       if (error) {
+        console.error('Sign up error:', error);
         toast({
           title: "Sign Up Error",
           description: error.message,
@@ -74,8 +79,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         title: "Success!",
         description: "Account created successfully. Please check your email for verification.",
       });
+      console.log('Sign up successful:', data);
       return { error: null };
     } catch (error: any) {
+      console.error('Unexpected sign up error:', error);
       toast({
         title: "Sign Up Error",
         description: error.message,
@@ -87,8 +94,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      
       if (error) {
+        console.error('Sign in error:', error);
         toast({
           title: "Sign In Error",
           description: error.message,
@@ -101,8 +110,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         title: "Welcome back!",
         description: "You've been successfully logged in.",
       });
+      console.log('Sign in successful:', data);
       return { error: null };
     } catch (error: any) {
+      console.error('Unexpected sign in error:', error);
       toast({
         title: "Sign In Error",
         description: error.message,
@@ -113,11 +124,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    toast({
-      title: "Signed out",
-      description: "You have been successfully logged out.",
-    });
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Sign out error:', error);
+      toast({
+        title: "Sign Out Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Signed out",
+        description: "You have been successfully logged out.",
+      });
+      console.log('Sign out successful');
+    }
   };
 
   return (
