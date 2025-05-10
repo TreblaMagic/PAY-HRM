@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
-import { User, UserEdit } from 'lucide-react';
+import { User, Pencil } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 
 const Profile = () => {
@@ -88,7 +88,7 @@ const Profile = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <UserEdit className="mr-2 h-5 w-5 text-primary" />
+                <Pencil className="mr-2 h-5 w-5 text-primary" />
                 Edit Profile
               </CardTitle>
               <CardDescription>Update your personal information</CardDescription>
