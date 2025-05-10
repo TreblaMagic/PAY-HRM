@@ -1,11 +1,11 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, LogIn, UserPlus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import {
   Card,
   CardContent,
@@ -16,13 +16,21 @@ import {
 } from '@/components/ui/card';
 
 export const AuthForm = () => {
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, user } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('login');
+  const navigate = useNavigate();
+
+  // Redirect if user is already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,9 +41,8 @@ export const AuthForm = () => {
     
     if (error) {
       setError(error.message);
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -53,10 +60,14 @@ export const AuthForm = () => {
     
     if (error) {
       setError(error.message);
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
+
+  // If already logged in, don't render the form
+  if (user) {
+    return null;
+  }
 
   return (
     <Card className="w-full max-w-md mx-auto">
