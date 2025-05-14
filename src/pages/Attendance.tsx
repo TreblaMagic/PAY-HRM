@@ -31,7 +31,7 @@ import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Employee } from "@/types/employee";
-import { Attendance, AttendanceStatus, DateRange } from "@/types/attendance";
+import { AttendanceRecord, AttendanceStatus, DateRange } from "@/types/attendance";
 import { getAllEmployees } from "@/services/employeeService";
 import { 
   addAttendance, 
@@ -43,18 +43,19 @@ import { DateRangePicker } from "@/components/attendance/DateRangePicker";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 
+// Add type declaration for jsPDF with autotable plugin
 declare module "jspdf" {
   interface jsPDF {
     autoTable: (options: any) => jsPDF;
   }
 }
 
-export default function Attendance() {
+export default function AttendancePage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>("");
   const [attendanceDate, setAttendanceDate] = useState<Date | undefined>(new Date());
   const [attendanceStatus, setAttendanceStatus] = useState<AttendanceStatus>("On Time");
-  const [attendanceRecords, setAttendanceRecords] = useState<Attendance[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [dateRange, setDateRange] = useState<DateRange>({
     startDate: undefined,
