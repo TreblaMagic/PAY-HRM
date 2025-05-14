@@ -62,15 +62,18 @@ const DashboardLayout = ({ children, title, activePage }: DashboardLayoutProps) 
               <Users className="mr-3 h-5 w-5" />
               Employees
             </Link>
-            <div 
+            <Link 
+              to="/attendance" 
               className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
                 activePage === 'attendance' ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
               <ClipboardList className="mr-3 h-5 w-5" />
               Attendance
-              <span className="ml-auto bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">New</span>
-            </div>
+              {activePage !== 'attendance' && (
+                <span className="ml-auto bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">New</span>
+              )}
+            </Link>
             <Link 
               to="#" 
               className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
