@@ -1,10 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Loader2, LogIn, UserPlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   Card,
@@ -14,6 +11,9 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import LoginForm from './LoginForm';
+import RegisterForm from './RegisterForm';
+import AuthFooter from './AuthFooter';
 
 export const AuthForm = () => {
   const { signIn, signUp, user } = useAuth();
@@ -85,143 +85,34 @@ export const AuthForm = () => {
           </TabsList>
           
           <TabsContent value="login">
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email-login">Email</Label>
-                <Input
-                  id="email-login"
-                  type="email"
-                  placeholder="name@company.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <Label htmlFor="password-login">Password</Label>
-                  <a 
-                    href="#" 
-                    className="text-sm text-accent hover:underline"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      // Password reset functionality could be added here
-                    }}
-                  >
-                    Forgot password?
-                  </a>
-                </div>
-                <Input
-                  id="password-login"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              {error && <p className="text-destructive text-sm">{error}</p>}
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Please wait
-                  </>
-                ) : (
-                  <>
-                    <LogIn className="mr-2 h-4 w-4" />
-                    Sign In
-                  </>
-                )}
-              </Button>
-            </form>
+            <LoginForm 
+              email={email}
+              setEmail={setEmail}
+              password={password}
+              setPassword={setPassword}
+              handleLogin={handleLogin}
+              loading={loading}
+              error={error}
+            />
           </TabsContent>
           
           <TabsContent value="register">
-            <form onSubmit={handleSignup} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email-register">Email</Label>
-                <Input
-                  id="email-register"
-                  type="email"
-                  placeholder="name@company.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password-register">Password</Label>
-                <Input
-                  id="password-register"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirm-password">Confirm Password</Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
-              </div>
-              {error && <p className="text-destructive text-sm">{error}</p>}
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating account...
-                  </>
-                ) : (
-                  <>
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Create Account
-                  </>
-                )}
-              </Button>
-            </form>
+            <RegisterForm 
+              email={email}
+              setEmail={setEmail}
+              password={password}
+              setPassword={setPassword}
+              confirmPassword={confirmPassword}
+              setConfirmPassword={setConfirmPassword}
+              handleSignup={handleSignup}
+              loading={loading}
+              error={error}
+            />
           </TabsContent>
         </Tabs>
       </CardContent>
       <CardFooter className="flex justify-center">
-        <p className="text-sm text-muted-foreground">
-          {activeTab === 'login' ? (
-            <>
-              Don't have an account?{' '}
-              <a 
-                href="#" 
-                className="text-accent hover:underline"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setActiveTab('register');
-                }}
-              >
-                Sign up
-              </a>
-            </>
-          ) : (
-            <>
-              Already have an account?{' '}
-              <a 
-                href="#" 
-                className="text-accent hover:underline"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setActiveTab('login');
-                }}
-              >
-                Sign in
-              </a>
-            </>
-          )}
-        </p>
+        <AuthFooter activeTab={activeTab} switchTab={setActiveTab} />
       </CardFooter>
     </Card>
   );
