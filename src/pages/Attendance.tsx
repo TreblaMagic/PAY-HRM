@@ -1,10 +1,13 @@
 
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -12,22 +15,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { 
-  CalendarIcon, 
-  Printer,
-  Search
-} from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { CalendarIcon, Printer, Search } from "lucide-react";
+import { DateRangePicker } from "@/components/attendance/DateRangePicker";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Employee } from "@/types/employee";
@@ -35,11 +40,12 @@ import { AttendanceRecord, AttendanceStatus, DateRange } from "@/types/attendanc
 import { getAllEmployees } from "@/services/employeeService";
 import { 
   addAttendance, 
-  getAllAttendance, 
-  getAttendanceByDate, 
-  getAttendanceByDateRange 
+  deleteAttendance, 
+  getAttendanceByDateRange, 
+  getAttendanceByEmployeeId, 
+  getAllAttendance 
 } from "@/services/attendanceService";
-import { DateRangePicker } from "@/components/attendance/DateRangePicker";
+import { Badge } from "@/components/ui/badge";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 
@@ -62,57 +68,160 @@ export default function AttendancePage() {
     endDate: undefined,
   });
 
-  const navigate = useNavigate();
-
   useEffect(() => {
-    setEmployees(getAllEmployees());
-    setAttendanceRecords(getAllAttendance());
+    loadEmployees();
+    loadAttendanceRecords();
   }, []);
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
+  const loadEmployees = async () => {
+    try {
+      const employees = await getAllEmployees();
+      setEmployees(employees);
+    } catch (error) {
+      console.error("Error loading employees:", error);
+    }
   };
 
-  const filteredAttendance = attendanceRecords.filter(
-    (record) =>
-      record.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.date.includes(searchTerm) ||
-      record.status.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const loadAttendanceRecords = async () => {
+    try {
+      const records = await getAllAttendance();
+      setAttendanceRecords(records);
+    } catch (error) {
+      console.error("Error loading attendance records:", error);
+    }
+  };
 
-  const handleSubmit = () => {
-    if (!selectedEmployeeId || !attendanceDate) {
-      toast({
-        title: "Error",
-        description: "Please select both employee and date",
-        variant: "destructive",
-      });
+  const handleSubmit = async () => {
+    if (!selectedEmployeeId || !attendanceDate) return;
+
+    const selectedEmployee = employees.find(emp => emp.id === selectedEmployeeId);
+    if (!selectedEmployee) return;
+
+    try {
+      const newRecord: AttendanceRecord = {
+        id: Date.now().toString(),
+        employeeId: selectedEmployeeId,
+        employeeName: `${selectedEmployee.firstName} ${selectedEmployee.lastName}`,
+        date: attendanceDate,
+        status: attendanceStatus,
+      };
+
+      await addAttendance(newRecord);
+      setAttendanceRecords([...attendanceRecords, newRecord]);
+      
+      // Reset form
+      setSelectedEmployeeId("");
+      setAttendanceDate(new Date());
+      setAttendanceStatus("On Time");
+    } catch (error) {
+      console.error("Error adding attendance record:", error);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteAttendance(id);
+      setAttendanceRecords(attendanceRecords.filter(record => record.id !== id));
+    } catch (error) {
+      console.error("Error deleting attendance record:", error);
+    }
+  };
+
+  const handleGenerateReport = async () => {
+    if (!dateRange.startDate || !dateRange.endDate) {
+      alert("Please select a date range for the report");
       return;
     }
 
     try {
-      const formattedDate = format(attendanceDate, "yyyy-MM-dd");
-      const newAttendance = addAttendance(
-        selectedEmployeeId,
-        formattedDate,
-        attendanceStatus
-      );
+      const records = await getAttendanceByDateRange(dateRange.startDate, dateRange.endDate);
       
-      // Refresh attendance list
-      setAttendanceRecords(getAllAttendance());
-      
-      toast({
-        title: "Success",
-        description: "Attendance recorded successfully",
-      });
+      if (records.length === 0) {
+        alert("No attendance records found for the selected date range");
+        return;
+      }
+
+      generatePDF(records, dateRange);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to record attendance",
-        variant: "destructive",
-      });
+      console.error("Error generating report:", error);
     }
   };
+
+  const generatePDF = (records: AttendanceRecord[], dateRange: DateRange) => {
+    const doc = new jsPDF();
+    
+    // Add title
+    doc.setFontSize(18);
+    doc.text("Attendance Report", 14, 22);
+    
+    // Add date range
+    doc.setFontSize(12);
+    doc.text(
+      `Date Range: ${format(dateRange.startDate!, "PPP")} to ${format(dateRange.endDate!, "PPP")}`,
+      14, 
+      32
+    );
+    
+    // Group records by employee
+    const employeeMap = new Map<string, AttendanceRecord[]>();
+    
+    records.forEach(record => {
+      if (!employeeMap.has(record.employeeId)) {
+        employeeMap.set(record.employeeId, []);
+      }
+      employeeMap.get(record.employeeId)!.push(record);
+    });
+    
+    // Prepare data for the table
+    const tableData: any[] = [];
+    
+    employeeMap.forEach((empRecords, employeeId) => {
+      const employee = employees.find(emp => emp.id === employeeId);
+      if (!employee) return;
+      
+      const employeeName = `${employee.firstName} ${employee.lastName}`;
+      
+      const onTimeCount = empRecords.filter(r => r.status === "On Time").length;
+      const lateCount = empRecords.filter(r => r.status === "Late").length;
+      const veryLateCount = empRecords.filter(r => r.status === "Very Late").length;
+      const totalDays = empRecords.length;
+      
+      tableData.push([
+        employeeName,
+        onTimeCount,
+        lateCount,
+        veryLateCount,
+        totalDays,
+        `${Math.round((onTimeCount / totalDays) * 100)}%`
+      ]);
+    });
+    
+    // Generate table
+    doc.autoTable({
+      startY: 40,
+      head: [['Employee Name', 'On Time', 'Late', 'Very Late', 'Total Days', 'Punctuality']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+      alternateRowStyles: { fillColor: [240, 240, 240] }
+    });
+    
+    // Add page numbers
+    const pageCount = doc.internal.pages.length;
+    for (let i = 1; i <= pageCount - 1; i++) {
+      doc.setPage(i);
+      doc.setFontSize(10);
+      doc.text(`Page ${i} of ${pageCount - 1}`, doc.internal.pageSize.width - 30, doc.internal.pageSize.height - 10);
+    }
+    
+    // Save the PDF
+    doc.save(`Attendance_Report_${format(new Date(), "yyyy-MM-dd")}.pdf`);
+  };
+
+  const filteredRecords = attendanceRecords.filter(record => {
+    const lowerSearchTerm = searchTerm.toLowerCase();
+    return record.employeeName.toLowerCase().includes(lowerSearchTerm);
+  });
 
   const getStatusColor = (status: AttendanceStatus) => {
     switch (status) {
@@ -123,330 +232,171 @@ export default function AttendancePage() {
       case "Very Late":
         return "bg-red-100 text-red-800";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "";
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    }).format(date);
-  };
-
-  const handlePrintReport = () => {
-    if (!dateRange.startDate || !dateRange.endDate) {
-      toast({
-        title: "Error",
-        description: "Please select both start and end dates",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const filteredRecords = getAttendanceByDateRange(dateRange);
-    
-    if (filteredRecords.length === 0) {
-      toast({
-        title: "No data",
-        description: "No attendance records found for the selected date range",
-      });
-      return;
-    }
-
-    generatePDF(filteredRecords, dateRange);
-  };
-
-  const generatePDF = (records: Attendance[], range: DateRange) => {
-    const doc = new jsPDF();
-    
-    // Add title
-    doc.setFontSize(18);
-    doc.text("Attendance Report", 14, 22);
-    
-    // Add date range
-    doc.setFontSize(12);
-    doc.text(
-      `Period: ${format(range.startDate as Date, "MMM dd, yyyy")} - ${format(
-        range.endDate as Date,
-        "MMM dd, yyyy"
-      )}`,
-      14,
-      32
-    );
-    
-    // Create table data
-    const tableData = records.map((record) => [
-      record.employeeName,
-      formatDate(record.date),
-      record.status,
-    ]);
-    
-    // Generate table
-    doc.autoTable({
-      startY: 40,
-      head: [["Employee", "Date", "Status"]],
-      body: tableData,
-      theme: "grid",
-      headStyles: {
-        fillColor: [155, 135, 245], // Primary purple color
-        textColor: [255, 255, 255],
-        fontStyle: "bold",
-      },
-      columnStyles: {
-        0: { cellWidth: 80 },
-        1: { cellWidth: 50 },
-        2: { cellWidth: 30, halign: "center" },
-      },
-      didDrawCell: function(data) {
-        // Color status cells based on value
-        if (data.column.index === 2 && data.cell.section === 'body') {
-          const status = data.cell.raw as string;
-          const cell = data.cell;
-          
-          if (status === "On Time") {
-            doc.setFillColor(240, 255, 240); // light green
-            doc.rect(cell.x, cell.y, cell.width, cell.height, 'F');
-            doc.setTextColor(0, 100, 0); // dark green
-          } else if (status === "Late") {
-            doc.setFillColor(255, 255, 224); // light yellow
-            doc.rect(cell.x, cell.y, cell.width, cell.height, 'F');
-            doc.setTextColor(184, 134, 11); // dark yellow
-          } else if (status === "Very Late") {
-            doc.setFillColor(255, 235, 235); // light red
-            doc.rect(cell.x, cell.y, cell.width, cell.height, 'F');
-            doc.setTextColor(178, 34, 34); // dark red
-          }
-          
-          // Re-add text after changing background
-          doc.text(status, cell.x + cell.width / 2, cell.y + cell.height / 2, {
-            align: "center",
-            baseline: "middle"
-          });
-          
-          return false; // Return false to prevent auto-rendering of cell content
-        }
-      }
-    });
-    
-    // Add footer
-    const pageCount = doc.internal.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFontSize(10);
-      doc.text(
-        `Page ${i} of ${pageCount} - Generated on ${format(new Date(), "MMM dd, yyyy")}`,
-        doc.internal.pageSize.getWidth() / 2,
-        doc.internal.pageSize.getHeight() - 10,
-        { align: "center" }
-      );
-    }
-    
-    // Save PDF
-    doc.save(`Attendance_Report_${format(new Date(), "yyyy-MM-dd")}.pdf`);
-    
-    toast({
-      title: "Success",
-      description: "Attendance report generated successfully",
-    });
   };
 
   return (
-    <DashboardLayout title="Attendance" activePage="attendance">
-      <div className="p-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold">Attendance Management</h1>
-          <p className="text-muted-foreground">
-            Track and manage employee attendance
-          </p>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Attendance Input Section */}
+    <DashboardLayout title="Attendance Management" activePage="attendance">
+      <div className="p-8">
+        <div className="grid grid-cols-1 gap-6">
+          {/* Attendance Input Card */}
           <Card>
             <CardHeader>
               <CardTitle>Record Attendance</CardTitle>
+              <CardDescription>Select an employee and mark attendance status</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Employee</label>
-                <Select
-                  value={selectedEmployeeId}
-                  onValueChange={setSelectedEmployeeId}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select Employee" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {employees.map((employee) => (
-                      <SelectItem key={employee.id} value={employee.id}>
-                        {employee.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Employee</label>
+                  <Select
+                    value={selectedEmployeeId}
+                    onValueChange={setSelectedEmployeeId}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Employee" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {employees.map(employee => (
+                        <SelectItem key={employee.id} value={employee.id}>
+                          {employee.firstName} {employee.lastName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <div>
-                <label className="text-sm font-medium">Date</label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !attendanceDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {attendanceDate ? (
-                        format(attendanceDate, "PPP")
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={attendanceDate}
-                      onSelect={setAttendanceDate}
-                      initialFocus
-                      className={cn("p-3 pointer-events-auto")}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Date</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal"
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {attendanceDate ? format(attendanceDate, "PPP") : "Select date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={attendanceDate}
+                        onSelect={setAttendanceDate}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
 
-              <div>
-                <label className="text-sm font-medium">Status</label>
-                <Select
-                  value={attendanceStatus}
-                  onValueChange={(value) => setAttendanceStatus(value as AttendanceStatus)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="On Time">
-                      <div className="flex items-center">
-                        <div className="h-3 w-3 rounded-full bg-green-500 mr-2"></div>
-                        On Time
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="Late">
-                      <div className="flex items-center">
-                        <div className="h-3 w-3 rounded-full bg-yellow-500 mr-2"></div>
-                        Late
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="Very Late">
-                      <div className="flex items-center">
-                        <div className="h-3 w-3 rounded-full bg-red-500 mr-2"></div>
-                        Very Late
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Status</label>
+                  <Select
+                    value={attendanceStatus}
+                    onValueChange={(value) => setAttendanceStatus(value as AttendanceStatus)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="On Time">On Time</SelectItem>
+                      <SelectItem value="Late">Late</SelectItem>
+                      <SelectItem value="Very Late">Very Late</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <Button 
-                className="w-full" 
-                onClick={handleSubmit}
-                disabled={!selectedEmployeeId || !attendanceDate}
-              >
-                Submit Attendance
-              </Button>
+                <div className="flex items-end">
+                  <Button onClick={handleSubmit} className="w-full">
+                    Submit
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
-          {/* Attendance Report Section */}
+          {/* Attendance Records Card */}
           <Card>
-            <CardHeader>
-              <CardTitle>Attendance Report</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Select a date range to generate an attendance report
-              </p>
-              
-              <DateRangePicker 
-                dateRange={dateRange}
-                setDateRange={setDateRange}
-                onPrint={handlePrintReport}
-              />
-              
-              <div className="flex items-center mt-4">
-                <div className="flex items-center mr-4">
-                  <div className="h-3 w-3 rounded-full bg-green-500 mr-2"></div>
-                  <span className="text-xs">On Time</span>
-                </div>
-                <div className="flex items-center mr-4">
-                  <div className="h-3 w-3 rounded-full bg-yellow-500 mr-2"></div>
-                  <span className="text-xs">Late</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="h-3 w-3 rounded-full bg-red-500 mr-2"></div>
-                  <span className="text-xs">Very Late</span>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Attendance Records</CardTitle>
+                <CardDescription>View and manage attendance records</CardDescription>
+              </div>
+              <div className="flex space-x-2">
+                <div className="relative w-64">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search employee..."
+                    className="pl-8"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Attendance List */}
-        <div className="mt-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Attendance Records</h2>
-            <div className="relative w-64">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-              <Input
-                placeholder="Search records..."
-                value={searchTerm}
-                onChange={handleSearchChange}
-                className="pl-10"
-              />
-            </div>
-          </div>
-          
-          <div className="rounded-lg border shadow">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Employee</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAttendance.length === 0 ? (
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={3} className="text-center py-8">
-                      No attendance records found
-                    </TableCell>
+                    <TableHead>Employee</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ) : (
-                  filteredAttendance.map((record) => (
-                    <TableRow key={record.id}>
-                      <TableCell className="font-medium">{record.employeeName}</TableCell>
-                      <TableCell>{formatDate(record.date)}</TableCell>
-                      <TableCell>
-                        <span
-                          className={`${getStatusColor(
-                            record.status
-                          )} px-2 py-1 rounded-full text-xs font-medium`}
-                        >
-                          {record.status}
-                        </span>
+                </TableHeader>
+                <TableBody>
+                  {filteredRecords.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-4 text-gray-500">
+                        No attendance records found
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  ) : (
+                    filteredRecords.map(record => (
+                      <TableRow key={record.id}>
+                        <TableCell>{record.employeeName}</TableCell>
+                        <TableCell>{format(new Date(record.date), "PPP")}</TableCell>
+                        <TableCell>
+                          <Badge className={cn("font-medium", getStatusColor(record.status))}>
+                            {record.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(record.id)}
+                          >
+                            Delete
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          {/* Print Report Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Print Attendance Report</CardTitle>
+              <CardDescription>Generate a PDF report of attendance for a specific date range</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div className="md:col-span-2">
+                  <DateRangePicker dateRange={dateRange} setDateRange={setDateRange} />
+                </div>
+                <Button onClick={handleGenerateReport} className="flex items-center">
+                  <Printer className="mr-2 h-4 w-4" />
+                  Generate Report
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </DashboardLayout>
