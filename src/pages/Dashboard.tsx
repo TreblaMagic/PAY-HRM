@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, Link } from 'react-router-dom';
@@ -10,6 +9,7 @@ import {
   LogOut, Search, Bell, MessageSquare, User, Users, Calendar, 
   ClipboardList, TrendingUp, FileText, MessageCircle, Settings, Home as HomeIcon
 } from 'lucide-react';
+import { RecentEmployees } from "@/components/dashboard/RecentEmployees";
 
 const Dashboard = () => {
   const { user, loading, signOut } = useAuth();
@@ -32,14 +32,6 @@ const Dashboard = () => {
     { title: 'Today\'s Attendance', value: '92%', icon: <ClipboardList className="h-6 w-6 text-orange-500" />, trend: '3% from yesterday', trendUp: true },
     { title: 'On Leave Today', value: '12', icon: <Calendar className="h-6 w-6 text-rose-500" />, trend: '5% from last week', trendUp: true },
     { title: 'Payroll Processed', value: '₦24.5M', icon: <FileText className="h-6 w-6 text-violet-500" />, trend: '8% from last month', trendUp: true }
-  ];
-
-  const recentEmployees = [
-    { name: 'Sarah Johnson', role: 'UI/UX Designer', department: 'Design', status: 'Active', joined: 'May 5, 2023' },
-    { name: 'Michael Okonkwo', role: 'Frontend Developer', department: 'Engineering', status: 'On Leave', joined: 'April 18, 2023' },
-    { name: 'Amina Diallo', role: 'Product Manager', department: 'Product', status: 'Active', joined: 'April 10, 2023' },
-    { name: 'David Adeyemi', role: 'Backend Developer', department: 'Engineering', status: 'Active', joined: 'March 25, 2023' },
-    { name: 'Fatima Nkosi', role: 'HR Specialist', department: 'Human Resources', status: 'Inactive', joined: 'March 15, 2023' }
   ];
 
   const calendarDates = Array.from({ length: 35 }, (_, i) => {
@@ -206,80 +198,7 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Recent Employees */}
             <div className="lg:col-span-2">
-              <Card>
-                <CardHeader className="flex justify-between items-center px-6 pt-6 pb-4">
-                  <CardTitle className="text-lg font-semibold">Recent Employees</CardTitle>
-                  <div className="flex space-x-2">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
-                      <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-                      </svg>
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
-                      <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                      </svg>
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="px-6 pb-6">
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full">
-                      <thead>
-                        <tr className="text-left text-sm font-medium text-gray-500">
-                          <th className="pb-3 pl-0">Employee</th>
-                          <th className="pb-3">Department</th>
-                          <th className="pb-3">Status</th>
-                          <th className="pb-3">Joined</th>
-                          <th className="pb-3">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {recentEmployees.map((employee, index) => (
-                          <tr key={index} className="text-sm">
-                            <td className="py-3 pl-0">
-                              <div className="flex items-center">
-                                <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                                  <User className="h-4 w-4 text-gray-600" />
-                                </div>
-                                <div className="ml-3">
-                                  <p className="font-medium text-gray-900">{employee.name}</p>
-                                  <p className="text-gray-500 text-xs">{employee.role}</p>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="py-3">{employee.department}</td>
-                            <td className="py-3">
-                              <span className={`px-2 py-1 text-xs rounded-full ${
-                                employee.status === 'Active' ? 'bg-green-100 text-green-800' :
-                                employee.status === 'On Leave' ? 'bg-orange-100 text-orange-800' :
-                                'bg-red-100 text-red-800'
-                              }`}>
-                                {employee.status}
-                              </span>
-                            </td>
-                            <td className="py-3">{employee.joined}</td>
-                            <td className="py-3">
-                              <div className="flex space-x-2">
-                                <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
-                                  <svg className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                  </svg>
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
-                                  <svg className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                  </svg>
-                                </Button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </CardContent>
-              </Card>
+              <RecentEmployees />
             </div>
             
             {/* Calendar */}
