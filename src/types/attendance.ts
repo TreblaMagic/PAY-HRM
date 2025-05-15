@@ -13,3 +13,4 @@ export type AttendanceRecord = {
   date: Date;
   status: AttendanceStatus;
 };
+

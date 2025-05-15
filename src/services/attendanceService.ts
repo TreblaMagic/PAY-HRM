@@ -1,5 +1,5 @@
 
-import { Attendance, AttendanceStatus, DateRange } from "@/types/attendance";
+import { AttendanceRecord, AttendanceStatus } from "@/types/attendance";
 import { Employee } from "@/types/employee";
 import { getAllEmployees } from "./employeeService";
 
@@ -11,19 +11,19 @@ const initializeAttendance = (): void => {
   if (!localStorage.getItem(STORAGE_KEY)) {
     const employees = getAllEmployees();
     if (employees.length > 0) {
-      const sampleAttendance: Attendance[] = [
+      const sampleAttendance: AttendanceRecord[] = [
         {
           id: "1",
           employeeId: employees[0].id,
           employeeName: employees[0].name,
-          date: new Date(Date.now() - 86400000).toISOString().split('T')[0], // Yesterday
+          date: new Date(Date.now() - 86400000), // Yesterday
           status: "On Time"
         },
         {
           id: "2",
           employeeId: employees[1]?.id || employees[0].id,
           employeeName: employees[1]?.name || employees[0].name,
-          date: new Date().toISOString().split('T')[0], // Today
+          date: new Date(), // Today
           status: "Late"
         }
       ];
@@ -35,17 +35,24 @@ const initializeAttendance = (): void => {
 };
 
 // Get all attendance records
-export const getAllAttendance = (): Attendance[] => {
+export const getAllAttendance = (): AttendanceRecord[] => {
   initializeAttendance();
   const attendance = localStorage.getItem(STORAGE_KEY);
-  return attendance ? JSON.parse(attendance) : [];
+  const records = attendance ? JSON.parse(attendance) : [];
+  
+  // Convert date strings back to Date objects
+  return records.map((record: any) => ({
+    ...record,
+    date: new Date(record.date)
+  }));
 };
 
 // Get attendance by date range
-export const getAttendanceByDateRange = ({ startDate, endDate }: DateRange): Attendance[] => {
+export const getAttendanceByDateRange = (startDate: Date, endDate: Date): AttendanceRecord[] => {
   if (!startDate || !endDate) return [];
   
   const attendance = getAllAttendance();
+  
   const start = new Date(startDate);
   start.setHours(0, 0, 0, 0);
   
@@ -59,44 +66,31 @@ export const getAttendanceByDateRange = ({ startDate, endDate }: DateRange): Att
 };
 
 // Add attendance
-export const addAttendance = (employeeId: string, date: string, status: AttendanceStatus): Attendance => {
+export const addAttendance = (record: AttendanceRecord): AttendanceRecord => {
   const attendance = getAllAttendance();
-  const employees = getAllEmployees();
-  const employee = employees.find(emp => emp.id === employeeId);
-  
-  if (!employee) {
-    throw new Error("Employee not found");
-  }
   
   // Check if there's already an attendance for this employee on this date
   const existingIndex = attendance.findIndex(
-    a => a.employeeId === employeeId && a.date === date
+    a => a.employeeId === record.employeeId && 
+    a.date.toDateString() === record.date.toDateString()
   );
-  
-  const newAttendance: Attendance = {
-    id: existingIndex >= 0 ? attendance[existingIndex].id : Date.now().toString(),
-    employeeId,
-    employeeName: employee.name,
-    date,
-    status
-  };
   
   if (existingIndex >= 0) {
     // Update existing record
-    attendance[existingIndex] = newAttendance;
+    attendance[existingIndex] = record;
   } else {
     // Add new record
-    attendance.push(newAttendance);
+    attendance.push(record);
   }
   
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(attendance));
-  return newAttendance;
-};
-
-// Get attendance by date
-export const getAttendanceByDate = (date: string): Attendance[] => {
-  const attendance = getAllAttendance();
-  return attendance.filter(record => record.date === date);
+  // Convert dates to strings for storage
+  const recordsToStore = attendance.map(record => ({
+    ...record,
+    date: record.date.toISOString()
+  }));
+  
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(recordsToStore));
+  return record;
 };
 
 // Delete attendance
@@ -106,6 +100,13 @@ export const deleteAttendance = (id: string): boolean => {
   
   if (filteredAttendance.length === attendance.length) return false;
   
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(filteredAttendance));
+  // Convert dates to strings for storage
+  const recordsToStore = filteredAttendance.map(record => ({
+    ...record,
+    date: record.date.toISOString()
+  }));
+  
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(recordsToStore));
   return true;
 };
+
