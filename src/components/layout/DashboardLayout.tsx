@@ -75,13 +75,16 @@ const DashboardLayout = ({ children, title, activePage }: DashboardLayoutProps) 
               )}
             </Link>
             <Link 
-              to="#" 
+              to="/leave" 
               className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
                 activePage === 'leave' ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
               <Calendar className="mr-3 h-5 w-5" />
               Leave Management
+              {activePage !== 'leave' && (
+                <span className="ml-auto bg-indigo-500 text-white text-xs px-2 py-0.5 rounded-full">New</span>
+              )}
             </Link>
           </nav>
           
