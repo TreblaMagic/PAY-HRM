@@ -1,137 +1,91 @@
 
-import { useState } from "react";
-import { MarkupSettings as MarkupSettingsType } from "@/types/isp";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import React, { useState } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { MarkupSettings as MarkupSettingsType } from '@/types/isp';
 
 interface MarkupSettingsProps {
   markupSettings: MarkupSettingsType;
   onUpdateMarkupSettings: (settings: MarkupSettingsType) => void;
 }
 
-export const MarkupSettings = ({
-  markupSettings,
-  onUpdateMarkupSettings
-}: MarkupSettingsProps) => {
-  const [formData, setFormData] = useState<MarkupSettingsType>(markupSettings);
-  const [isEditing, setIsEditing] = useState(false);
+export const MarkupSettings = ({ markupSettings, onUpdateMarkupSettings }: MarkupSettingsProps) => {
+  const [settings, setSettings] = useState<MarkupSettingsType>({
+    equipmentMarkup: markupSettings.equipmentMarkup,
+    mbpsMarkup: markupSettings.mbpsMarkup,
+    setupMarkup: markupSettings.setupMarkup,
+    managedServicesMarkup: markupSettings.managedServicesMarkup
+  });
   
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
+  const handleChange = (field: keyof MarkupSettingsType, value: number) => {
+    setSettings(prev => ({
       ...prev,
-      [name]: parseFloat(value) || 0
+      [field]: value
     }));
   };
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onUpdateMarkupSettings(formData);
-    setIsEditing(false);
+    onUpdateMarkupSettings(settings);
   };
   
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle>Markup Settings</CardTitle>
-          <CardDescription>Configure percentage markup for various services</CardDescription>
-        </div>
-        {!isEditing && (
-          <Button onClick={() => setIsEditing(true)} variant="outline" size="sm">
-            Edit Settings
-          </Button>
-        )}
+      <CardHeader>
+        <CardTitle>Markup Settings</CardTitle>
       </CardHeader>
       <CardContent>
-        {isEditing ? (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="equipmentMarkup">Equipment Markup (%)</Label>
-                <Input 
-                  id="equipmentMarkup" 
-                  name="equipmentMarkup" 
-                  type="number" 
-                  min="0" 
-                  max="100" 
-                  value={formData.equipmentMarkup} 
-                  onChange={handleInputChange} 
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="mbpsMarkup">Internet Speed Markup (%)</Label>
-                <Input 
-                  id="mbpsMarkup" 
-                  name="mbpsMarkup" 
-                  type="number" 
-                  min="0" 
-                  max="100" 
-                  value={formData.mbpsMarkup} 
-                  onChange={handleInputChange} 
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="setupMarkup">Setup Fee Markup (%)</Label>
-                <Input 
-                  id="setupMarkup" 
-                  name="setupMarkup" 
-                  type="number" 
-                  min="0" 
-                  max="100" 
-                  value={formData.setupMarkup} 
-                  onChange={handleInputChange} 
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="managedServicesMarkup">Managed Services Markup (%)</Label>
-                <Input 
-                  id="managedServicesMarkup" 
-                  name="managedServicesMarkup" 
-                  type="number" 
-                  min="0" 
-                  max="100" 
-                  value={formData.managedServicesMarkup} 
-                  onChange={handleInputChange} 
-                  required
-                />
-              </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="equipmentMarkup">Equipment Markup (%)</Label>
+              <Input 
+                id="equipmentMarkup" 
+                type="number" 
+                value={settings.equipmentMarkup.toString()} 
+                min={0}
+                max={100}
+                onChange={(e) => handleChange('equipmentMarkup', parseFloat(e.target.value) || 0)}
+              />
             </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" type="button" onClick={() => {
-                setIsEditing(false);
-                setFormData(markupSettings);
-              }}>
-                Cancel
-              </Button>
-              <Button type="submit">Save Changes</Button>
+            <div className="space-y-2">
+              <Label htmlFor="mbpsMarkup">Internet Speed (MBPS) Markup (%)</Label>
+              <Input 
+                id="mbpsMarkup" 
+                type="number" 
+                value={settings.mbpsMarkup.toString()}
+                min={0} 
+                max={100}
+                onChange={(e) => handleChange('mbpsMarkup', parseFloat(e.target.value) || 0)}
+              />
             </div>
-          </form>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-4 border rounded-md bg-gray-50">
-              <p className="text-sm text-gray-500">Equipment Markup</p>
-              <p className="text-2xl font-semibold">{markupSettings.equipmentMarkup}%</p>
+            <div className="space-y-2">
+              <Label htmlFor="setupMarkup">Setup Cost Markup (%)</Label>
+              <Input 
+                id="setupMarkup" 
+                type="number" 
+                value={settings.setupMarkup.toString()} 
+                min={0}
+                max={100}
+                onChange={(e) => handleChange('setupMarkup', parseFloat(e.target.value) || 0)}
+              />
             </div>
-            <div className="p-4 border rounded-md bg-gray-50">
-              <p className="text-sm text-gray-500">Internet Speed Markup</p>
-              <p className="text-2xl font-semibold">{markupSettings.mbpsMarkup}%</p>
-            </div>
-            <div className="p-4 border rounded-md bg-gray-50">
-              <p className="text-sm text-gray-500">Setup Fee Markup</p>
-              <p className="text-2xl font-semibold">{markupSettings.setupMarkup}%</p>
-            </div>
-            <div className="p-4 border rounded-md bg-gray-50">
-              <p className="text-sm text-gray-500">Managed Services Markup</p>
-              <p className="text-2xl font-semibold">{markupSettings.managedServicesMarkup}%</p>
+            <div className="space-y-2">
+              <Label htmlFor="managedServicesMarkup">Managed Services Markup (%)</Label>
+              <Input 
+                id="managedServicesMarkup" 
+                type="number" 
+                value={settings.managedServicesMarkup.toString()}
+                min={0} 
+                max={100}
+                onChange={(e) => handleChange('managedServicesMarkup', parseFloat(e.target.value) || 0)}
+              />
             </div>
           </div>
-        )}
+          <Button type="submit" className="w-full">Save Markup Settings</Button>
+        </form>
       </CardContent>
     </Card>
   );
