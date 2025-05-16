@@ -14,6 +14,7 @@ import LeaveManagement from "./pages/LeaveManagement";
 import Payroll from "./pages/Payroll";
 import ISP from "./pages/ISP";
 import ISPSettings from "./pages/ISPSettings";
+import Documents from "./pages/Documents";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/payroll" element={<Payroll />} />
             <Route path="/isp" element={<ISP />} />
             <Route path="/isp/settings" element={<ISPSettings />} />
+            <Route path="/documents" element={<Documents />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
