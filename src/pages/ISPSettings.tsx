@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -21,7 +20,7 @@ import {
   updateEquipment,
   updateInternetSpeed,
   updateMarkupSettings
-} from '@/services/ispService';
+} from '@/services/isp';
 
 const ISPSettings = () => {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
