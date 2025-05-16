@@ -2,6 +2,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRole } from '@/contexts/RoleContext';
 import { 
   LayoutDashboard, 
   Users, 
@@ -20,6 +21,7 @@ type SidebarProps = {
 
 export function Sidebar({ activePage }: SidebarProps) {
   const { signOut } = useAuth();
+  const { hasPermission } = useRole();
   const location = useLocation();
   const currentPath = location.pathname;
   
@@ -49,106 +51,124 @@ export function Sidebar({ activePage }: SidebarProps) {
         {/* HR MANAGEMENT SECTION */}
         <h3 className="text-xs font-semibold text-gray-400 mb-4">HR MANAGEMENT</h3>
         <nav className="space-y-1">
-          <Link 
-            to="/dashboard" 
-            className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-              isActive('/dashboard') ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            <LayoutDashboard className="mr-3 h-5 w-5" />
-            Dashboard
-          </Link>
+          {hasPermission('/dashboard') && (
+            <Link 
+              to="/dashboard" 
+              className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                isActive('/dashboard') ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <LayoutDashboard className="mr-3 h-5 w-5" />
+              Dashboard
+            </Link>
+          )}
           
-          <Link 
-            to="/employees" 
-            className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-              isActive('/employees') ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            <Users className="mr-3 h-5 w-5" />
-            Employees
-          </Link>
+          {hasPermission('/employees') && (
+            <Link 
+              to="/employees" 
+              className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                isActive('/employees') ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <Users className="mr-3 h-5 w-5" />
+              Employees
+            </Link>
+          )}
           
-          <Link 
-            to="/attendance" 
-            className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-              isActive('/attendance') ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            <ClipboardList className="mr-3 h-5 w-5" />
-            Attendance
-            {!isActive('/attendance') && (
-              <span className="ml-auto bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">New</span>
-            )}
-          </Link>
+          {hasPermission('/attendance') && (
+            <Link 
+              to="/attendance" 
+              className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                isActive('/attendance') ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <ClipboardList className="mr-3 h-5 w-5" />
+              Attendance
+              {!isActive('/attendance') && (
+                <span className="ml-auto bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">New</span>
+              )}
+            </Link>
+          )}
           
-          <Link 
-            to="/leave" 
-            className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-              isActive('/leave') ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            <Calendar className="mr-3 h-5 w-5" />
-            Leave Management
-          </Link>
+          {hasPermission('/leave') && (
+            <Link 
+              to="/leave" 
+              className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                isActive('/leave') ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <Calendar className="mr-3 h-5 w-5" />
+              Leave Management
+            </Link>
+          )}
         </nav>
         
         {/* FINANCE MANAGEMENT SECTION */}
         <h3 className="text-xs font-semibold text-gray-400 mt-8 mb-4">FINANCE MANAGEMENT</h3>
         <nav className="space-y-1">
-          <Link 
-            to="/payroll" 
-            className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-              isActive('/payroll') ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            <CreditCard className="mr-3 h-5 w-5" />
-            Payroll
-          </Link>
+          {hasPermission('/payroll') && (
+            <Link 
+              to="/payroll" 
+              className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                isActive('/payroll') ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <CreditCard className="mr-3 h-5 w-5" />
+              Payroll
+            </Link>
+          )}
           
-          <Link 
-            to="/isp" 
-            className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-              isActive('/isp') && !isActive('/isp/settings') ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            <BarChart2 className="mr-3 h-5 w-5" />
-            ISP
-          </Link>
+          {hasPermission('/isp') && (
+            <Link 
+              to="/isp" 
+              className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                isActive('/isp') && !isActive('/isp/settings') ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <BarChart2 className="mr-3 h-5 w-5" />
+              ISP
+            </Link>
+          )}
           
-          <Link 
-            to="/documents" 
-            className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-              isActive('/documents') ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            <FileText className="mr-3 h-5 w-5" />
-            Documents
-          </Link>
+          {hasPermission('/documents') && (
+            <Link 
+              to="/documents" 
+              className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                isActive('/documents') ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <FileText className="mr-3 h-5 w-5" />
+              Documents
+            </Link>
+          )}
           
-          <Link 
-            to="/isp/settings" 
-            className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-              isActive('/isp/settings') ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            <Settings className="mr-3 h-5 w-5" />
-            ISP Settings
-          </Link>
+          {hasPermission('/isp/settings') && (
+            <Link 
+              to="/isp/settings" 
+              className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                isActive('/isp/settings') ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <Settings className="mr-3 h-5 w-5" />
+              ISP Settings
+            </Link>
+          )}
         </nav>
         
         {/* SETTINGS SECTION */}
         <h3 className="text-xs font-semibold text-gray-400 mt-8 mb-4">SETTINGS</h3>
         <nav className="space-y-1">
-          <Link 
-            to="/roles-permissions" 
-            className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-              isActive('/roles-permissions') ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            <Users className="mr-3 h-5 w-5" />
-            Roles & Permissions
-          </Link>
+          {hasPermission('/roles-permissions') && (
+            <Link 
+              to="/roles-permissions" 
+              className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                isActive('/roles-permissions') ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <Users className="mr-3 h-5 w-5" />
+              Roles & Permissions
+            </Link>
+          )}
           
           <button 
             onClick={signOut}
