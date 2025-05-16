@@ -14,13 +14,21 @@ import {
   LogOut
 } from 'lucide-react';
 
-export function Sidebar() {
+type SidebarProps = {
+  activePage?: string;
+};
+
+export function Sidebar({ activePage }: SidebarProps) {
   const { signOut } = useAuth();
   const location = useLocation();
   const currentPath = location.pathname;
   
   // Check if a path is active (exact match or sub-path)
   const isActive = (path: string) => {
+    if (activePage) {
+      return path.includes(activePage);
+    }
+    
     if (path === '/dashboard' && currentPath === '/dashboard') {
       return true;
     }

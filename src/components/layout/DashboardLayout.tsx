@@ -10,15 +10,16 @@ import { Sidebar } from './Sidebar';
 type DashboardLayoutProps = {
   children: React.ReactNode;
   title: string;
+  activePage?: string;
 };
 
-const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
+const DashboardLayout = ({ children, title, activePage }: DashboardLayoutProps) => {
   const { user } = useAuth();
   
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
-      <Sidebar />
+      <Sidebar activePage={activePage} />
       
       {/* Main Content */}
       <div className="flex-1 overflow-auto">

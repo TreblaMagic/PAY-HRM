@@ -3,5 +3,5 @@ import React from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 
 export function DocumentsSidebar() {
-  return <Sidebar />;
+  return <Sidebar activePage="documents" />;
 }
