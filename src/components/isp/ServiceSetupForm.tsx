@@ -67,7 +67,7 @@ export const ServiceSetupForm = ({
   };
 
   const handleServiceChange = (serviceId: string) => {
-    if (serviceId === "") {
+    if (serviceId === "none") {
       setSelectedService(null);
       return;
     }
@@ -278,7 +278,7 @@ export const ServiceSetupForm = ({
               <SelectValue placeholder="Select Managed Service" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">None</SelectItem>
+              <SelectItem value="none">None</SelectItem>
               {managedServices.map((service) => (
                 <SelectItem key={service.id} value={service.id}>
                   {service.name} - ${service.price}
