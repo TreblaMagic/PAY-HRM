@@ -2,132 +2,23 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { 
-  LogOut, 
-  Bell, 
-  MessageSquare, 
-  User, 
-  Users, 
-  Calendar, 
-  ClipboardList, 
-  TrendingUp, 
-  FileText, 
-  MessageCircle, 
-  Settings, 
-  Home as HomeIcon,
-  Search
-} from 'lucide-react';
+import { Bell, MessageSquare, User, Search } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
+import { Sidebar } from './Sidebar';
 
 type DashboardLayoutProps = {
   children: React.ReactNode;
   title: string;
-  activePage: 'dashboard' | 'employees' | 'attendance' | 'leave';
 };
 
-const DashboardLayout = ({ children, title, activePage }: DashboardLayoutProps) => {
-  const { user, signOut } = useAuth();
+const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
+  const { user } = useAuth();
   
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 min-h-screen">
-        <div className="p-4 border-b border-gray-200 flex items-center">
-          <img src="/lovable-uploads/a1ae4194-76ca-4004-b465-1cfc43b5e20a.png" alt="BTEL Logo" className="h-8 w-8" />
-          <div className="ml-2">
-            <h1 className="text-xl font-bold text-gray-800">BTEL</h1>
-            <h2 className="text-sm font-medium text-primary">HRM</h2>
-          </div>
-        </div>
-        
-        <div className="p-4">
-          <h3 className="text-xs font-semibold text-gray-400 mb-4">MAIN</h3>
-          <nav className="space-y-1">
-            <Link 
-              to="/dashboard" 
-              className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                activePage === 'dashboard' ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              <HomeIcon className="mr-3 h-5 w-5" />
-              Dashboard
-            </Link>
-            <Link 
-              to="/employees" 
-              className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                activePage === 'employees' ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              <Users className="mr-3 h-5 w-5" />
-              Employees
-            </Link>
-            <Link 
-              to="/attendance" 
-              className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                activePage === 'attendance' ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              <ClipboardList className="mr-3 h-5 w-5" />
-              Attendance
-              {activePage !== 'attendance' && (
-                <span className="ml-auto bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">New</span>
-              )}
-            </Link>
-            <Link 
-              to="/leave" 
-              className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                activePage === 'leave' ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              <Calendar className="mr-3 h-5 w-5" />
-              Leave Management
-              {activePage !== 'leave' && (
-                <span className="ml-auto bg-indigo-500 text-white text-xs px-2 py-0.5 rounded-full">New</span>
-              )}
-            </Link>
-          </nav>
-          
-          <h3 className="text-xs font-semibold text-gray-400 mt-8 mb-4">HR MANAGEMENT</h3>
-          <nav className="space-y-1">
-            <Link to="#" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md">
-              <FileText className="mr-3 h-5 w-5" />
-              Payroll
-            </Link>
-            <Link to="#" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md">
-              <TrendingUp className="mr-3 h-5 w-5" />
-              Performance
-            </Link>
-            <Link to="#" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md">
-              <FileText className="mr-3 h-5 w-5" />
-              Documents
-            </Link>
-            <Link to="#" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md">
-              <MessageCircle className="mr-3 h-5 w-5" />
-              Announcements
-            </Link>
-          </nav>
-          
-          <h3 className="text-xs font-semibold text-gray-400 mt-8 mb-4">SETTINGS</h3>
-          <nav className="space-y-1">
-            <Link to="#" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md">
-              <Settings className="mr-3 h-5 w-5" />
-              General Settings
-            </Link>
-            <Link to="#" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md">
-              <Users className="mr-3 h-5 w-5" />
-              Roles & Permissions
-            </Link>
-            <button 
-              onClick={signOut}
-              className="w-full flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md"
-            >
-              <LogOut className="mr-3 h-5 w-5" />
-              Logout
-            </button>
-          </nav>
-        </div>
-      </aside>
+      <Sidebar />
       
       {/* Main Content */}
       <div className="flex-1 overflow-auto">

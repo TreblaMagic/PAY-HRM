@@ -37,6 +37,7 @@ const App = () => (
             <Route path="/isp" element={<ISP />} />
             <Route path="/isp/settings" element={<ISPSettings />} />
             <Route path="/documents" element={<Documents />} />
+            <Route path="/roles-permissions" element={<NotFound />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
