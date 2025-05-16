@@ -1,5 +1,4 @@
-
-import { Equipment, InternetSpeed, SetupCost, ManagedService, MarkupSettings, Invoice, ServiceSetup } from '@/types/isp';
+import { Equipment, InternetSpeed, SetupCost, ManagedService, MarkupSettings, Invoice, InvoiceItem, ServiceSetup } from '@/types/isp';
 
 // Mock data - in a real application, these would come from an API or database
 const equipment: Equipment[] = [
