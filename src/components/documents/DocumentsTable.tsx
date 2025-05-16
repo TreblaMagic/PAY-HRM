@@ -66,14 +66,14 @@ export function DocumentsTable({ documents, onDocumentDeleted }: DocumentsTableP
     setShowDeleteDialog(false);
   };
 
-  const handleDownload = (document: Document) => {
+  const handleDownload = (doc: Document) => {
     // For data URLs, we can create a link and click it to download
-    const link = document.createElement('a');
-    link.href = document.fileUrl;
-    link.download = document.fileName;
-    document.body.appendChild(link);
+    const link = window.document.createElement('a');
+    link.href = doc.fileUrl;
+    link.download = doc.fileName;
+    window.document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    window.document.body.removeChild(link);
   };
 
   if (documents.length === 0) {
