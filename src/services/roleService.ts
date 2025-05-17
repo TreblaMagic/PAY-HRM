@@ -139,23 +139,28 @@ export const getCurrentUserRole = async (): Promise<UserRole | null> => {
 // Function to assign IT role to a specific user
 export const assignITRoleToAdmin = async (email: string): Promise<boolean> => {
   try {
-    // Get user by email
-    const { data: userData, error: userError } = await supabase
-      .from('auth.users')
-      .select('id')
-      .eq('email', email)
-      .single();
-      
-    if (userError || !userData) {
-      console.error('User not found:', email);
+    // We can't directly query auth.users from client-side
+    // Instead, we need the user to be logged in or look them up differently
+    
+    // Get user by querying the user_roles table for a user with matching email
+    // This requires a different approach since we can't directly access auth.users
+    
+    // For this specific function, we'll get the current user's session
+    // and check if the email matches the target email
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session || session.user.email !== email) {
+      console.error('User not found or not logged in as the target user:', email);
       return false;
     }
+    
+    const userId = session.user.id;
     
     // Check if user already has a role
     const { data: existingRole, error: roleError } = await supabase
       .from('user_roles')
       .select('*')
-      .eq('user_id', userData.id)
+      .eq('user_id', userId)
       .single();
       
     if (existingRole) {
@@ -163,7 +168,7 @@ export const assignITRoleToAdmin = async (email: string): Promise<boolean> => {
       const { error: updateError } = await supabase
         .from('user_roles')
         .update({ role: 'IT', username: 'Admin' })
-        .eq('user_id', userData.id);
+        .eq('user_id', userId);
         
       if (updateError) {
         console.error('Error updating role:', updateError);
@@ -174,7 +179,7 @@ export const assignITRoleToAdmin = async (email: string): Promise<boolean> => {
       const { error: insertError } = await supabase
         .from('user_roles')
         .insert({
-          user_id: userData.id,
+          user_id: userId,
           username: 'Admin',
           role: 'IT'
         });
