@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +12,10 @@ const Dashboard = () => {
   const { user, loading } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
 
+  useEffect(() => {
+    console.log('Dashboard component rendered', { user });
+  }, [user]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -22,8 +25,11 @@ const Dashboard = () => {
   }
 
   if (!user) {
+    console.log('No user, redirecting to home');
     return <Navigate to="/" replace />;
   }
+
+  console.log('Rendering dashboard content');
 
   const stats = [
     { title: 'Total Employees', value: '248', icon: 'users', trend: '12% from last month', trendUp: true },

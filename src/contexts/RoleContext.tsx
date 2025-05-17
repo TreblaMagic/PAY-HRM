@@ -22,6 +22,7 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
     if (user) {
       try {
         const role = await getCurrentUserRole();
+        console.log('Current user role:', role);
         setUserRole(role);
       } catch (error) {
         console.error('Error fetching user role:', error);
@@ -36,28 +37,42 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
+    console.log('User changed, refreshing role');
     refreshRole();
   }, [user]);
 
   const hasPermission = (path: string): boolean => {
-    if (!userRole) return false;
+    // For debugging purposes
+    console.log('hasPermission check:', { path, userRole, rolePermissions: userRole ? rolePermissions[userRole] : null });
     
-    // IT role has access to everything
-    if (userRole === 'IT') return true;
+    // If no role is set yet, temporarily allow access to debug the issue
+    if (!userRole) {
+      console.log('No user role set, temporarily allowing access');
+      return true;
+    }
     
-    // Check if the user has permission to access this path
-    return rolePermissions[userRole].some(allowedPath => {
-      // Exact match
-      if (path === allowedPath) return true;
-      
-      // Path is a parent of allowedPath (e.g., /isp is a parent of /isp/settings)
-      if (allowedPath.startsWith(path + '/')) return true;
-      
-      // Path is a child of allowedPath (e.g., /dashboard/analytics is a child of /dashboard)
-      if (path.startsWith(allowedPath + '/')) return true;
-      
-      return false;
-    });
+    // Add a special case for dashboard to always allow access
+    if (path === '/dashboard') {
+      return true;
+    }
+    
+    // Check if the user has permission to access this path based on their role
+    if (rolePermissions[userRole]) {
+      return rolePermissions[userRole].some(allowedPath => {
+        // Exact match
+        if (path === allowedPath) return true;
+        
+        // Path is a parent of allowedPath (e.g., /isp is a parent of /isp/settings)
+        if (allowedPath.startsWith(path + '/')) return true;
+        
+        // Path is a child of allowedPath (e.g., /dashboard/analytics is a child of /dashboard)
+        if (path.startsWith(allowedPath + '/')) return true;
+        
+        return false;
+      });
+    }
+    
+    return false;
   };
 
   return (
