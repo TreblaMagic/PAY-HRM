@@ -4,9 +4,10 @@ import { UserWithRole, UserRole } from '@/types/role';
 
 export const fetchUsers = async (): Promise<UserWithRole[]> => {
   try {
+    // Using the "any" type here because the Supabase types don't include user_roles yet
     const { data, error } = await supabase
       .from('user_roles')
-      .select('*, users:user_id(id, email)');
+      .select('*, users:user_id(id, email)') as { data: any, error: any };
     
     if (error) {
       throw error;
@@ -17,7 +18,7 @@ export const fetchUsers = async (): Promise<UserWithRole[]> => {
       id: item.users.id,
       email: item.users.email,
       username: item.username || item.users.email.split('@')[0],
-      role: item.role,
+      role: item.role as UserRole,
       created_at: item.created_at
     }));
   } catch (error) {
@@ -40,13 +41,14 @@ export const createUser = async (email: string, password: string, username: stri
     }
     
     // Create user role in the custom table
+    // Using "any" type here because the Supabase types don't include user_roles yet
     const { error: roleError } = await supabase
       .from('user_roles')
       .insert({
         user_id: authData.user.id,
         username,
         role
-      });
+      }) as { error: any };
     
     if (roleError) {
       throw roleError;
@@ -65,10 +67,11 @@ export const updateUserRole = async (userId: string, role: UserRole, username?: 
       updateData.username = username;
     }
     
+    // Using "any" type here because the Supabase types don't include user_roles yet
     const { error } = await supabase
       .from('user_roles')
       .update(updateData)
-      .eq('user_id', userId);
+      .eq('user_id', userId) as { error: any };
     
     if (error) {
       throw error;
@@ -103,11 +106,12 @@ export const getCurrentUserRole = async (): Promise<UserRole | null> => {
       return null;
     }
     
+    // Using "any" type here because the Supabase types don't include user_roles yet
     const { data, error } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', session.user.id)
-      .single();
+      .single() as { data: any, error: any };
     
     if (error || !data) {
       return null;
