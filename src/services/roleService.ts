@@ -97,21 +97,29 @@ export const deleteUser = async (userId: string): Promise<void> => {
 
 export const getCurrentUserRole = async (): Promise<UserRole | null> => {
   try {
+    console.log('Fetching current user role...');
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session) {
+      console.log('No active session found');
       return null;
     }
     
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', session.user.id)
-      .single() as { data: any, error: any };
+    console.log('Session found for user:', session.user.email);
     
-    if (error || !data) {
-      // Check if this is the specific admin user we want to set as IT
-      if (session.user.email === 'treblamagic@gmail.com') {
+    // Special case for admin user
+    if (session.user.email === 'treblamagic@gmail.com') {
+      console.log('Admin user detected, checking if IT role exists');
+      
+      // Check if admin already has a role
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .single() as { data: any, error: any };
+      
+      if (error || !data) {
+        console.log('No role found for admin, assigning IT role');
         // Try to insert the IT role for this user
         const { error: insertError } = await supabase
           .from('user_roles')
@@ -124,11 +132,28 @@ export const getCurrentUserRole = async (): Promise<UserRole | null> => {
         if (!insertError) {
           console.log('Successfully assigned IT role to Admin user');
           return 'IT';
+        } else {
+          console.error('Error assigning IT role:', insertError);
         }
+      } else {
+        console.log('Admin role found:', data.role);
+        return data.role as UserRole;
       }
+    }
+    
+    // For non-admin users
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', session.user.id)
+      .single() as { data: any, error: any };
+    
+    if (error || !data) {
+      console.log('No role found for user');
       return null;
     }
     
+    console.log('Role found for user:', data.role);
     return data.role as UserRole;
   } catch (error) {
     console.error('Error getting current user role:', error);

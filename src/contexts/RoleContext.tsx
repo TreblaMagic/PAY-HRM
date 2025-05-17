@@ -21,6 +21,7 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   const refreshRole = async () => {
     if (user) {
       try {
+        setLoading(true);
         const role = await getCurrentUserRole();
         console.log('Current user role:', role);
         setUserRole(role);
@@ -53,12 +54,13 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
     
     // Always allow access to dashboard
     if (path === '/dashboard') {
+      console.log('Dashboard access granted');
       return true;
     }
     
     // Check if the user has permission to access this path based on their role
     if (rolePermissions[userRole]) {
-      return rolePermissions[userRole].some(allowedPath => {
+      const hasAccess = rolePermissions[userRole].some(allowedPath => {
         // Exact match
         if (path === allowedPath) return true;
         
@@ -70,8 +72,12 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
         
         return false;
       });
+      
+      console.log(`Access to ${path} for role ${userRole}: ${hasAccess ? 'granted' : 'denied'}`);
+      return hasAccess;
     }
     
+    console.log(`No permissions defined for role ${userRole}, denying access`);
     return false;
   };
 

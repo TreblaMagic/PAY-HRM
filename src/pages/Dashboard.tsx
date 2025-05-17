@@ -1,22 +1,25 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate, Link } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Navigate } from 'react-router-dom';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { RecentEmployees } from "@/components/dashboard/RecentEmployees";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { useRole } from '@/contexts/RoleContext';
 
 const Dashboard = () => {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const { loading: roleLoading } = useRole();
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     console.log('Dashboard component rendered', { user });
   }, [user]);
 
-  if (loading) {
+  // If still loading, show a spinner
+  if (authLoading || roleLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -109,22 +112,7 @@ const Dashboard = () => {
           {/* Calendar */}
           <div>
             <Card>
-              <CardHeader className="flex justify-between items-center px-6 pt-6 pb-4">
-                <CardTitle className="text-lg font-semibold">Calendar</CardTitle>
-                <div className="flex space-x-2">
-                  <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="px-6 pb-6">
+              <CardContent className="px-6 py-6">
                 <h3 className="text-base font-medium mb-4">May 2023</h3>
                 <div className="grid grid-cols-7 gap-1 text-center mb-2">
                   <div className="text-xs font-medium text-gray-500">Sun</div>
