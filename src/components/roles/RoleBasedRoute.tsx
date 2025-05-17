@@ -27,10 +27,12 @@ export const RoleBasedRoute: React.FC<RoleBasedRouteProps> = ({ path }) => {
     return <Navigate to="/" replace />;
   }
   
-  // For debugging - log the path and permission status
-  console.log(`Checking permission for path: ${path}, hasPermission: ${hasPermission(path)}`);
+  // Check if user has permission to access this path
+  if (!hasPermission(path)) {
+    console.log(`User does not have permission to access ${path}, redirecting to dashboard`);
+    return <Navigate to="/dashboard" replace />;
+  }
   
-  // Allow access for now regardless of permission to debug the pages
-  // We'll re-enable strict permission checking once we confirm pages are working
+  // User has permission, allow access
   return <Outlet />;
 };

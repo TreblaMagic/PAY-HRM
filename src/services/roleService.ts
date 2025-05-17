@@ -110,6 +110,22 @@ export const getCurrentUserRole = async (): Promise<UserRole | null> => {
       .single() as { data: any, error: any };
     
     if (error || !data) {
+      // Check if this is the specific admin user we want to set as IT
+      if (session.user.email === 'treblamagic@gmail.com') {
+        // Try to insert the IT role for this user
+        const { error: insertError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: session.user.id,
+            username: 'Admin',
+            role: 'IT'
+          });
+        
+        if (!insertError) {
+          console.log('Successfully assigned IT role to Admin user');
+          return 'IT';
+        }
+      }
       return null;
     }
     
@@ -117,5 +133,61 @@ export const getCurrentUserRole = async (): Promise<UserRole | null> => {
   } catch (error) {
     console.error('Error getting current user role:', error);
     return null;
+  }
+};
+
+// Function to assign IT role to a specific user
+export const assignITRoleToAdmin = async (email: string): Promise<boolean> => {
+  try {
+    // Get user by email
+    const { data: userData, error: userError } = await supabase
+      .from('auth.users')
+      .select('id')
+      .eq('email', email)
+      .single();
+      
+    if (userError || !userData) {
+      console.error('User not found:', email);
+      return false;
+    }
+    
+    // Check if user already has a role
+    const { data: existingRole, error: roleError } = await supabase
+      .from('user_roles')
+      .select('*')
+      .eq('user_id', userData.id)
+      .single();
+      
+    if (existingRole) {
+      // Update existing role to IT
+      const { error: updateError } = await supabase
+        .from('user_roles')
+        .update({ role: 'IT', username: 'Admin' })
+        .eq('user_id', userData.id);
+        
+      if (updateError) {
+        console.error('Error updating role:', updateError);
+        return false;
+      }
+    } else {
+      // Insert new role
+      const { error: insertError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: userData.id,
+          username: 'Admin',
+          role: 'IT'
+        });
+        
+      if (insertError) {
+        console.error('Error inserting role:', insertError);
+        return false;
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error assigning IT role:', error);
+    return false;
   }
 };

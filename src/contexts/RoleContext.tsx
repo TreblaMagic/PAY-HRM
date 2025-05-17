@@ -45,13 +45,13 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
     // For debugging purposes
     console.log('hasPermission check:', { path, userRole, rolePermissions: userRole ? rolePermissions[userRole] : null });
     
-    // If no role is set yet, temporarily allow access to debug the issue
+    // If no role is set yet, deny access
     if (!userRole) {
-      console.log('No user role set, temporarily allowing access');
-      return true;
+      console.log('No user role set, denying access');
+      return false;
     }
     
-    // Add a special case for dashboard to always allow access
+    // Always allow access to dashboard
     if (path === '/dashboard') {
       return true;
     }
