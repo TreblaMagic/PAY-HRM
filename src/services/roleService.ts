@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabaseClient';
 import { UserWithRole, UserRole } from '@/types/role';
 
@@ -112,60 +111,58 @@ export const getCurrentUserRole = async (): Promise<UserRole | null> => {
       console.log('Admin user detected, assigning IT role directly');
       
       // First check if the user already has a role
-      const { data: existingRole } = await supabase
-        .from('user_roles')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .single();
-      
-      if (existingRole) {
-        console.log('Found existing role for admin:', existingRole.role);
-        return existingRole.role as UserRole;
-      } else {
-        try {
-          // Try to insert IT role for admin
-          const { error: insertError } = await supabase
-            .from('user_roles')
-            .insert({
-              user_id: session.user.id,
-              username: 'Admin',
-              role: 'IT'
-            });
-          
-          if (insertError) {
-            console.error('Error inserting role for admin:', insertError);
-            console.log('Returning IT role for admin despite database error');
-            // Return IT role even if the insert fails - crucial fix
-            return 'IT';
-          }
-          
-          console.log('Successfully added IT role for admin user');
-          return 'IT';
-        } catch (insertErr) {
-          console.error('Exception when inserting role:', insertErr);
-          console.log('Returning IT role for admin despite exception');
-          // Return IT role even if there's an exception
-          return 'IT';
+      try {
+        const { data: existingRole } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .single();
+        
+        if (existingRole) {
+          console.log('Found existing role for admin:', existingRole.role);
+          return existingRole.role as UserRole;
         }
+        
+        // Try to insert IT role for admin
+        const { error: insertError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: session.user.id,
+            username: 'Admin',
+            role: 'IT'
+          });
+        
+        // Return IT role even if there's an error - crucial fix
+        console.log('Admin user - returning IT role');
+        return 'IT';
+      } catch (error) {
+        console.error('Error handling admin role:', error);
+        // Always return IT for admin regardless of errors
+        return 'IT';
       }
     }
     
     // For non-admin users
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', session.user.id)
-      .single();
-    
-    if (error || !data) {
-      console.log('No role found for user');
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .single();
+      
+      if (error || !data) {
+        console.log('No role found for user');
+        return null;
+      }
+      
+      console.log('Role found for user:', data.role);
+      return data.role as UserRole;
+    } catch (error) {
+      console.error('Error getting user role:', error);
       return null;
     }
-    
-    console.log('Role found for user:', data.role);
-    return data.role as UserRole;
   } catch (error) {
-    console.error('Error getting current user role:', error);
+    console.error('Error in getCurrentUserRole:', error);
     // Check if the user is the admin user, return IT role even in case of error
     try {
       const { data: { session } } = await supabase.auth.getSession();

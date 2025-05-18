@@ -11,19 +11,20 @@ type RoleBasedRouteProps = {
 
 export const RoleBasedRoute: React.FC<RoleBasedRouteProps> = ({ path }) => {
   const { user, loading: authLoading } = useAuth();
-  const { hasPermission, loading: roleLoading, refreshRole } = useRole();
+  const { hasPermission, loading: roleLoading, refreshRole, userRole } = useRole();
   
   useEffect(() => {
     console.log(`RoleBasedRoute for path ${path} mounted, user:`, user?.email);
+    console.log('Current role state:', { userRole, loading: roleLoading });
     
-    // Refresh role when component mounts to ensure we have the latest role data
-    if (user && !roleLoading) {
+    // Only refresh role when component mounts if user exists and no role is currently being loaded
+    if (user && !roleLoading && !userRole) {
       console.log('Refreshing role in RoleBasedRoute for user:', user.email);
       refreshRole();
     }
-  }, [path, user, roleLoading, refreshRole]);
+  }, [user, path]); // Remove roleLoading and refreshRole from dependencies to avoid loops
   
-  // Show loading spinner while checking auth and role
+  // Show loading spinner while checking auth
   if (authLoading) {
     console.log(`Auth still loading for path ${path}`);
     return (
@@ -40,6 +41,7 @@ export const RoleBasedRoute: React.FC<RoleBasedRouteProps> = ({ path }) => {
   }
 
   // During role loading, show spinner instead of redirecting
+  // This is critical to prevent redirect loops
   if (roleLoading) {
     console.log(`Role still loading for path ${path}`);
     return (
@@ -47,6 +49,13 @@ export const RoleBasedRoute: React.FC<RoleBasedRouteProps> = ({ path }) => {
         <Spinner />
       </div>
     );
+  }
+
+  // Special case for dashboard - always render it if we have a user
+  // This prevents redirect loops
+  if (path === '/dashboard') {
+    console.log(`Rendering dashboard for user ${user.email} regardless of role`);
+    return <Outlet />;
   }
   
   // Check if user has permission to access this path

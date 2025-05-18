@@ -1,5 +1,5 @@
 
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { UserRole, rolePermissions } from '@/types/role';
 import { getCurrentUserRole } from '@/services/roleService';
 import { useAuth } from './AuthContext';
@@ -17,10 +17,12 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
+  const isRefreshing = useRef(false);
 
   const refreshRole = async () => {
-    if (user) {
+    if (user && !isRefreshing.current) {
       try {
+        isRefreshing.current = true;
         setLoading(true);
         console.log(`Fetching role for user ID: ${user.id}, email: ${user.email}`);
         const role = await getCurrentUserRole();
@@ -31,26 +33,32 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
         setUserRole(null);
       } finally {
         setLoading(false);
+        isRefreshing.current = false;
       }
     } else {
-      console.log('No user logged in, setting role to null');
+      console.log('No user logged in or already refreshing, setting role to null');
       setUserRole(null);
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    console.log('User changed in RoleContext, refreshing role');
-    refreshRole();
-  }, [user]);
+    console.log('User changed in RoleContext:', user?.email);
+    if (user) {
+      refreshRole();
+    } else {
+      setUserRole(null);
+      setLoading(false);
+    }
+  }, [user?.id]); // Only depend on user.id to prevent reloading on other user property changes
 
   const hasPermission = (path: string): boolean => {
     // For debugging purposes
     console.log('hasPermission check:', { path, userRole, permissionsForRole: userRole ? rolePermissions[userRole] : 'No role' });
     
-    // Special case: if no role is set but user exists, we're still loading
-    if (!userRole && user && loading) {
-      console.log('Role still loading, allowing access temporarily');
+    // Always allow access to dashboard
+    if (path === '/dashboard') {
+      console.log('Dashboard access granted');
       return true;
     }
     
@@ -58,12 +66,6 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
     if (!userRole && !loading) {
       console.log('No user role set, denying access');
       return false;
-    }
-    
-    // Always allow access to dashboard
-    if (path === '/dashboard') {
-      console.log('Dashboard access granted');
-      return true;
     }
     
     // Check if the user has permission to access this path based on their role
