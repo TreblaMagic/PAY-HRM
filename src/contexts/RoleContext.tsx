@@ -22,8 +22,9 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
     if (user) {
       try {
         setLoading(true);
+        console.log(`Fetching role for user ID: ${user.id}, email: ${user.email}`);
         const role = await getCurrentUserRole();
-        console.log('Current user role:', role);
+        console.log('Current user role retrieved:', role);
         setUserRole(role);
       } catch (error) {
         console.error('Error fetching user role:', error);
@@ -32,22 +33,29 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
         setLoading(false);
       }
     } else {
+      console.log('No user logged in, setting role to null');
       setUserRole(null);
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    console.log('User changed, refreshing role');
+    console.log('User changed in RoleContext, refreshing role');
     refreshRole();
   }, [user]);
 
   const hasPermission = (path: string): boolean => {
     // For debugging purposes
-    console.log('hasPermission check:', { path, userRole, rolePermissions: userRole ? rolePermissions[userRole] : null });
+    console.log('hasPermission check:', { path, userRole, permissionsForRole: userRole ? rolePermissions[userRole] : 'No role' });
     
-    // If no role is set yet, deny access
-    if (!userRole) {
+    // Special case: if no role is set but user exists, we're still loading
+    if (!userRole && user && loading) {
+      console.log('Role still loading, allowing access temporarily');
+      return true;
+    }
+    
+    // If no role is set and we're done loading, deny access
+    if (!userRole && !loading) {
       console.log('No user role set, denying access');
       return false;
     }
@@ -59,7 +67,7 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
     }
     
     // Check if the user has permission to access this path based on their role
-    if (rolePermissions[userRole]) {
+    if (userRole && rolePermissions[userRole]) {
       const hasAccess = rolePermissions[userRole].some(allowedPath => {
         // Exact match
         if (path === allowedPath) return true;

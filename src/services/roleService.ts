@@ -109,35 +109,44 @@ export const getCurrentUserRole = async (): Promise<UserRole | null> => {
     
     // Special case for admin user
     if (session.user.email === 'treblamagic@gmail.com') {
-      console.log('Admin user detected, checking if IT role exists');
+      console.log('Admin user detected, assigning IT role directly');
       
-      // Check if admin already has a role
-      const { data, error } = await supabase
+      // First check if the user already has a role
+      const { data: existingRole } = await supabase
         .from('user_roles')
-        .select('role')
+        .select('*')
         .eq('user_id', session.user.id)
-        .single() as { data: any, error: any };
+        .single();
       
-      if (error || !data) {
-        console.log('No role found for admin, assigning IT role');
-        // Try to insert the IT role for this user
-        const { error: insertError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: session.user.id,
-            username: 'Admin',
-            role: 'IT'
-          });
-        
-        if (!insertError) {
-          console.log('Successfully assigned IT role to Admin user');
-          return 'IT';
-        } else {
-          console.error('Error assigning IT role:', insertError);
-        }
+      if (existingRole) {
+        console.log('Found existing role for admin:', existingRole.role);
+        return existingRole.role as UserRole;
       } else {
-        console.log('Admin role found:', data.role);
-        return data.role as UserRole;
+        try {
+          // Try to insert IT role for admin
+          const { error: insertError } = await supabase
+            .from('user_roles')
+            .insert({
+              user_id: session.user.id,
+              username: 'Admin',
+              role: 'IT'
+            });
+          
+          if (insertError) {
+            console.error('Error inserting role for admin:', insertError);
+            console.log('Returning IT role for admin despite database error');
+            // Return IT role even if the insert fails - crucial fix
+            return 'IT';
+          }
+          
+          console.log('Successfully added IT role for admin user');
+          return 'IT';
+        } catch (insertErr) {
+          console.error('Exception when inserting role:', insertErr);
+          console.log('Returning IT role for admin despite exception');
+          // Return IT role even if there's an exception
+          return 'IT';
+        }
       }
     }
     
@@ -146,7 +155,7 @@ export const getCurrentUserRole = async (): Promise<UserRole | null> => {
       .from('user_roles')
       .select('role')
       .eq('user_id', session.user.id)
-      .single() as { data: any, error: any };
+      .single();
     
     if (error || !data) {
       console.log('No role found for user');
@@ -157,21 +166,24 @@ export const getCurrentUserRole = async (): Promise<UserRole | null> => {
     return data.role as UserRole;
   } catch (error) {
     console.error('Error getting current user role:', error);
+    // Check if the user is the admin user, return IT role even in case of error
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user.email === 'treblamagic@gmail.com') {
+        console.log('Admin user detected during error recovery, returning IT role');
+        return 'IT';
+      }
+    } catch (e) {
+      console.error('Error in fallback check:', e);
+    }
     return null;
   }
 };
 
-// Function to assign IT role to a specific user
+// Updated function to assign IT role to admin
 export const assignITRoleToAdmin = async (email: string): Promise<boolean> => {
   try {
-    // We can't directly query auth.users from client-side
-    // Instead, we need the user to be logged in or look them up differently
-    
-    // Get user by querying the user_roles table for a user with matching email
-    // This requires a different approach since we can't directly access auth.users
-    
-    // For this specific function, we'll get the current user's session
-    // and check if the email matches the target email
+    // Get the current session
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session || session.user.email !== email) {
@@ -180,9 +192,10 @@ export const assignITRoleToAdmin = async (email: string): Promise<boolean> => {
     }
     
     const userId = session.user.id;
+    console.log('Assigning IT role to user ID:', userId);
     
     // Check if user already has a role
-    const { data: existingRole, error: roleError } = await supabase
+    const { data: existingRole } = await supabase
       .from('user_roles')
       .select('*')
       .eq('user_id', userId)
@@ -190,6 +203,7 @@ export const assignITRoleToAdmin = async (email: string): Promise<boolean> => {
       
     if (existingRole) {
       // Update existing role to IT
+      console.log('Updating existing role to IT');
       const { error: updateError } = await supabase
         .from('user_roles')
         .update({ role: 'IT', username: 'Admin' })
@@ -201,6 +215,7 @@ export const assignITRoleToAdmin = async (email: string): Promise<boolean> => {
       }
     } else {
       // Insert new role
+      console.log('Inserting new IT role');
       const { error: insertError } = await supabase
         .from('user_roles')
         .insert({
@@ -215,6 +230,7 @@ export const assignITRoleToAdmin = async (email: string): Promise<boolean> => {
       }
     }
     
+    console.log('Successfully assigned IT role to', email);
     return true;
   } catch (error) {
     console.error('Error assigning IT role:', error);
