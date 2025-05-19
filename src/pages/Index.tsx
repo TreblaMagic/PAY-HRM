@@ -7,6 +7,7 @@ import Counters from '@/components/Counters';
 import Testimonials from '@/components/Testimonials';
 import Contact from '@/components/Contact';
 import Footer from '@/components/Footer';
+import Partners from '@/components/Partners';
 
 const Index = () => {
   // Apply smooth scrolling behavior to the entire document
@@ -18,19 +19,25 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#004052]">
       <Navbar />
       <main>
         <section id="home">
           <Hero />
         </section>
-        <section id="services">
+        
+        <Partners />
+        
+        <section id="services" className="bg-white">
           <Services />
         </section>
+        
         <Counters />
-        <section id="testimonials">
+        
+        <section id="testimonials" className="bg-white">
           <Testimonials />
         </section>
+        
         <section id="contact">
           <Contact />
         </section>

@@ -39,15 +39,15 @@ const Navbar = () => {
     <>
       <nav
         className={`fixed w-full z-50 transition-all duration-300 ${
-          isScrolled ? 'bg-white shadow-md py-2' : 'bg-transparent py-4'
+          isScrolled ? 'bg-[#002A3A]/90 shadow-md py-2 backdrop-blur-md' : 'bg-transparent py-4'
         }`}
       >
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <Link to="/" className="flex items-center">
-                <span className="text-2xl font-bold text-primary">BTEL</span>
-                <span className="ml-1 text-2xl font-bold text-accent">.</span>
+                <span className="text-2xl font-bold text-white">BTEL</span>
+                <span className="ml-1 text-2xl font-bold text-[#00D1B2]">.</span>
               </Link>
             </div>
 
@@ -55,32 +55,32 @@ const Navbar = () => {
             <div className="hidden md:flex items-center space-x-8">
               <a 
                 onClick={() => scrollToSection('home')} 
-                className="text-primary hover:text-accent transition-colors cursor-pointer font-medium"
+                className="text-white hover:text-[#00D1B2] transition-colors cursor-pointer font-medium"
               >
                 Home
               </a>
               <a 
                 onClick={() => scrollToSection('services')} 
-                className="text-primary hover:text-accent transition-colors cursor-pointer font-medium"
+                className="text-white hover:text-[#00D1B2] transition-colors cursor-pointer font-medium"
               >
                 Services
               </a>
               <a 
                 onClick={() => scrollToSection('testimonials')} 
-                className="text-primary hover:text-accent transition-colors cursor-pointer font-medium"
+                className="text-white hover:text-[#00D1B2] transition-colors cursor-pointer font-medium"
               >
                 Testimonials
               </a>
               <a 
                 onClick={() => scrollToSection('contact')} 
-                className="text-primary hover:text-accent transition-colors cursor-pointer font-medium"
+                className="text-white hover:text-[#00D1B2] transition-colors cursor-pointer font-medium"
               >
                 Contact
               </a>
               {user ? (
                 <Link to="/dashboard">
                   <Button 
-                    className="bg-accent hover:bg-accent/90 text-white font-medium"
+                    className="bg-[#00D1B2] hover:bg-[#00D1B2]/90 text-white font-medium"
                   >
                     Dashboard
                   </Button>
@@ -88,7 +88,7 @@ const Navbar = () => {
               ) : (
                 <Button 
                   onClick={() => setIsLoginOpen(true)}
-                  className="bg-accent hover:bg-accent/90 text-white font-medium"
+                  className="bg-[#00D1B2] hover:bg-[#00D1B2]/90 text-white font-medium"
                 >
                   Portal
                 </Button>
@@ -99,7 +99,7 @@ const Navbar = () => {
             <div className="md:hidden">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="text-primary p-2 focus:outline-none"
+                className="text-white p-2 focus:outline-none"
               >
                 <svg
                   className="w-6 h-6"
@@ -130,36 +130,36 @@ const Navbar = () => {
 
           {/* Mobile Menu */}
           {isMobileMenuOpen && (
-            <div className="md:hidden mt-4 bg-white rounded-lg shadow-lg p-4 absolute left-0 right-0 mx-4 animate-fade-in">
+            <div className="md:hidden mt-4 bg-[#002A3A] rounded-lg shadow-lg p-4 absolute left-0 right-0 mx-4 animate-fade-in">
               <div className="flex flex-col space-y-4">
                 <a 
                   onClick={() => scrollToSection('home')} 
-                  className="text-primary hover:text-accent transition-colors cursor-pointer font-medium"
+                  className="text-white hover:text-[#00D1B2] transition-colors cursor-pointer font-medium"
                 >
                   Home
                 </a>
                 <a 
                   onClick={() => scrollToSection('services')} 
-                  className="text-primary hover:text-accent transition-colors cursor-pointer font-medium"
+                  className="text-white hover:text-[#00D1B2] transition-colors cursor-pointer font-medium"
                 >
                   Services
                 </a>
                 <a 
                   onClick={() => scrollToSection('testimonials')} 
-                  className="text-primary hover:text-accent transition-colors cursor-pointer font-medium"
+                  className="text-white hover:text-[#00D1B2] transition-colors cursor-pointer font-medium"
                 >
                   Testimonials
                 </a>
                 <a 
                   onClick={() => scrollToSection('contact')} 
-                  className="text-primary hover:text-accent transition-colors cursor-pointer font-medium"
+                  className="text-white hover:text-[#00D1B2] transition-colors cursor-pointer font-medium"
                 >
                   Contact
                 </a>
                 {user ? (
                   <Link to="/dashboard">
                     <Button 
-                      className="bg-accent hover:bg-accent/90 text-white font-medium"
+                      className="bg-[#00D1B2] hover:bg-[#00D1B2]/90 text-white font-medium"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       Dashboard
@@ -171,7 +171,7 @@ const Navbar = () => {
                       setIsLoginOpen(true);
                       setIsMobileMenuOpen(false);
                     }}
-                    className="bg-accent hover:bg-accent/90 text-white font-medium"
+                    className="bg-[#00D1B2] hover:bg-[#00D1B2]/90 text-white font-medium"
                   >
                     Portal
                   </Button>

@@ -45,10 +45,6 @@ export default {
 					DEFAULT: 'hsl(var(--muted))',
 					foreground: 'hsl(var(--muted-foreground))'
 				},
-				accent: {
-					DEFAULT: '#00D1B2',
-					foreground: '#ffffff'
-				},
 				popover: {
 					DEFAULT: 'hsl(var(--popover))',
 					foreground: 'hsl(var(--popover-foreground))'
@@ -57,6 +53,11 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+			},
+			backgroundColor: {
+				'teal-dark': '#002A3A',
+				'teal-medium': '#004052',
+				'teal-accent': '#00D1B2',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
