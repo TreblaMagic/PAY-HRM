@@ -53,6 +53,11 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				naira: {
+					DEFAULT: '#009E60',
+					light: '#e6f7f0',
+					dark: '#006B41'
+				},
 			},
 			backgroundColor: {
 				'teal-dark': '#002A3A',

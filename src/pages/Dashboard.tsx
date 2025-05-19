@@ -8,15 +8,67 @@ import { Search } from 'lucide-react';
 import { RecentEmployees } from "@/components/dashboard/RecentEmployees";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useRole } from '@/contexts/RoleContext';
+import { getAllEmployees } from '@/services/employeeService';
+import { getAllAttendance } from '@/services/attendanceService';
+import { getAllLeaveRecords } from '@/services/leaveService';
+import { formatCurrency } from '@/utils/formatters';
 
 const Dashboard = () => {
   const { user, loading: authLoading } = useAuth();
   const { loading: roleLoading } = useRole();
   const [searchQuery, setSearchQuery] = useState('');
+  const [dashboardData, setDashboardData] = useState({
+    totalEmployees: 0,
+    todayAttendance: 0,
+    onLeaveToday: 0,
+    payrollProcessed: 0
+  });
 
   useEffect(() => {
     console.log('Dashboard component rendered', { user });
+    if (user) {
+      loadDashboardData();
+    }
   }, [user]);
+
+  const loadDashboardData = () => {
+    // Get total employees
+    const employees = getAllEmployees();
+    
+    // Get today's attendance
+    const attendanceRecords = getAllAttendance();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayAttendance = attendanceRecords.filter(record => {
+      const recordDate = new Date(record.date);
+      recordDate.setHours(0, 0, 0, 0);
+      return recordDate.getTime() === today.getTime();
+    }).length;
+    
+    // Get employees on leave today
+    const leaveRecords = getAllLeaveRecords();
+    const onLeaveToday = leaveRecords.filter(record => {
+      const startDate = new Date(record.startDate);
+      const endDate = new Date(record.endDate);
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(0, 0, 0, 0);
+      return (
+        record.status === "Approved" &&
+        today >= startDate &&
+        today <= endDate
+      );
+    }).length;
+    
+    // Calculate total payroll processed
+    const totalSalaries = employees.reduce((total, emp) => total + emp.salary, 0);
+    
+    setDashboardData({
+      totalEmployees: employees.length,
+      todayAttendance,
+      onLeaveToday,
+      payrollProcessed: totalSalaries
+    });
+  };
 
   // If still loading, show a spinner
   if (authLoading || roleLoading) {
@@ -35,10 +87,36 @@ const Dashboard = () => {
   console.log('Rendering dashboard content');
 
   const stats = [
-    { title: 'Total Employees', value: '248', icon: 'users', trend: '12% from last month', trendUp: true },
-    { title: 'Today\'s Attendance', value: '92%', icon: 'clipboard', trend: '3% from yesterday', trendUp: true },
-    { title: 'On Leave Today', value: '12', icon: 'calendar', trend: '5% from last week', trendUp: true },
-    { title: 'Payroll Processed', value: '₦24.5M', icon: 'file', trend: '8% from last month', trendUp: true }
+    { 
+      title: 'Total Employees', 
+      value: dashboardData.totalEmployees.toString(), 
+      icon: 'users', 
+      trend: '12% from last month', 
+      trendUp: true 
+    },
+    { 
+      title: 'Today\'s Attendance', 
+      value: `${dashboardData.todayAttendance > 0 
+        ? Math.round((dashboardData.todayAttendance / dashboardData.totalEmployees) * 100) 
+        : 0}%`, 
+      icon: 'clipboard', 
+      trend: '3% from yesterday', 
+      trendUp: true 
+    },
+    { 
+      title: 'On Leave Today', 
+      value: dashboardData.onLeaveToday.toString(), 
+      icon: 'calendar', 
+      trend: '5% from last week', 
+      trendUp: true 
+    },
+    { 
+      title: 'Payroll Processed', 
+      value: formatCurrency(dashboardData.payrollProcessed), 
+      icon: 'file', 
+      trend: '8% from last month', 
+      trendUp: true 
+    }
   ];
 
   const calendarDates = Array.from({ length: 35 }, (_, i) => {
