@@ -1,48 +1,25 @@
-
-import React, { useEffect } from 'react';
+import React from 'react';
 import Navbar from '@/components/Navbar';
-import Hero from '@/components/Hero';
-import Services from '@/components/Services';
-import Counters from '@/components/Counters';
-import Testimonials from '@/components/Testimonials';
-import Contact from '@/components/Contact';
-import Footer from '@/components/Footer';
-import Partners from '@/components/Partners';
+import HeroSection from '@/components/HeroSection';
+import ProductServicesSection from '@/components/ProductServicesSection';
+import CustodyOrbSection from '@/components/CustodyOrbSection';
+import ContactSection from '@/components/ContactSection';
+import FooterSection from '@/components/FooterSection';
 
 const Index = () => {
-  // Apply smooth scrolling behavior to the entire document
-  useEffect(() => {
-    document.documentElement.style.scrollBehavior = 'smooth';
-    return () => {
-      document.documentElement.style.scrollBehavior = 'auto';
-    };
-  }, []);
-
   return (
-    <div className="min-h-screen bg-[#004052]">
+    <div className="min-h-screen bg-[#101f34] text-[#dae5e5]">
       <Navbar />
+      
+      {/* Main Content */}
       <main>
-        <section id="home">
-          <Hero />
-        </section>
-        
-        <Partners />
-        
-        <section id="services" className="bg-white">
-          <Services />
-        </section>
-        
-        <Counters />
-        
-        <section id="testimonials" className="bg-white">
-          <Testimonials />
-        </section>
-        
-        <section id="contact">
-          <Contact />
-        </section>
+        <HeroSection />
+        <ProductServicesSection />
+        <CustodyOrbSection />
+        <ContactSection />
       </main>
-      <Footer />
+
+      <FooterSection />
     </div>
   );
 };

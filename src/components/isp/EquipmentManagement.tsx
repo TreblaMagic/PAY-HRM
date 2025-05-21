@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -95,7 +94,7 @@ export const EquipmentManagement = ({ equipment, onAddEquipment, onUpdateEquipme
                   <p className="text-sm text-gray-500 mb-1">{equip.description}</p>
                   <div className="flex justify-between items-center mt-2">
                     <div>
-                      <p className="font-medium">${equip.price}</p>
+                      <p className="font-medium">₦{equip.price}</p>
                       <p className="text-xs text-gray-500">{equip.inStock} in stock</p>
                     </div>
                     <Button variant="outline" size="sm" onClick={() => handleOpenDialog(equip)}>
@@ -141,7 +140,7 @@ export const EquipmentManagement = ({ equipment, onAddEquipment, onUpdateEquipme
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="price">Price ($)</Label>
+                <Label htmlFor="price">Price (₦)</Label>
                 <Input 
                   id="price" 
                   type="number" 

@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { UserRole, rolePermissions } from '@/types/role';
 import { getCurrentUserRole } from '@/services/roleService';
@@ -50,11 +49,16 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
       setUserRole(null);
       setLoading(false);
     }
-  }, [user?.id]); // Only depend on user.id to prevent reloading on other user property changes
+  }, [user?.id]);
 
   const hasPermission = (path: string): boolean => {
     // For debugging purposes
-    console.log('hasPermission check:', { path, userRole, permissionsForRole: userRole ? rolePermissions[userRole] : 'No role' });
+    console.log('hasPermission check:', { 
+      path, 
+      userRole, 
+      permissionsForRole: userRole ? rolePermissions[userRole] : 'No role',
+      userEmail: user?.email 
+    });
     
     // Always allow access to dashboard
     if (path === '/dashboard') {

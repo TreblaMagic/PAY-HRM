@@ -1,4 +1,3 @@
-
 export type UserRole = 'HR' | 'Finance' | 'IT';
 
 export interface UserWithRole {
@@ -15,7 +14,8 @@ export const rolePermissions: Record<UserRole, string[]> = {
     '/employees',
     '/attendance',
     '/leave',
-    '/documents'
+    '/documents',
+    '/roles-permissions'
   ],
   'Finance': [
     '/dashboard',

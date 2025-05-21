@@ -1,4 +1,3 @@
-
 import { Employee } from "@/types/employee";
 import { Bonus, PaymentStatus } from "@/types/payroll";
 import { getAllEmployees } from "./employeeService";
@@ -45,10 +44,48 @@ export const getAllPaymentStatus = (): PaymentStatus[] => {
   return paymentStatus ? JSON.parse(paymentStatus) : [];
 };
 
+// Initialize payment status for an employee if it doesn't exist
+const initializeEmployeePaymentStatus = (employeeId: string): PaymentStatus => {
+  const allStatus = getAllPaymentStatus();
+  const existingStatus = allStatus.find(status => status.employeeId === employeeId);
+  
+  if (existingStatus) return existingStatus;
+  
+  const newStatus: PaymentStatus = {
+    employeeId,
+    year: new Date().getFullYear(),
+    months: {
+      January: false,
+      February: false,
+      March: false,
+      April: false,
+      May: false,
+      June: false,
+      July: false,
+      August: false,
+      September: false,
+      October: false,
+      November: false,
+      December: false
+    }
+  };
+  
+  allStatus.push(newStatus);
+  localStorage.setItem(PAYMENT_STATUS_KEY, JSON.stringify(allStatus));
+  return newStatus;
+};
+
 // Get payment status for a specific employee
 export const getEmployeePaymentStatus = (employeeId: string): PaymentStatus | undefined => {
   const allStatus = getAllPaymentStatus();
-  return allStatus.find(status => status.employeeId === employeeId);
+  const status = allStatus.find(status => status.employeeId === employeeId);
+  
+  if (!status) {
+    // Initialize payment status if it doesn't exist
+    return initializeEmployeePaymentStatus(employeeId);
+  }
+  
+  return status;
 };
 
 // Update payment status for an employee
@@ -65,6 +102,31 @@ export const updatePaymentStatus = (
   allStatus[index].months[month] = isPaid;
   localStorage.setItem(PAYMENT_STATUS_KEY, JSON.stringify(allStatus));
   return allStatus[index];
+};
+
+// Update multiple months payment status for an employee
+export const updateMultiplePaymentStatus = (
+  employeeId: string,
+  months: Record<string, boolean>
+): PaymentStatus | null => {
+  try {
+    const allStatus = getAllPaymentStatus();
+    const index = allStatus.findIndex(status => status.employeeId === employeeId);
+    
+    if (index === -1) {
+      // Initialize payment status if it doesn't exist
+      const newStatus = initializeEmployeePaymentStatus(employeeId);
+      newStatus.months = { ...newStatus.months, ...months };
+      return newStatus;
+    }
+    
+    allStatus[index].months = { ...allStatus[index].months, ...months };
+    localStorage.setItem(PAYMENT_STATUS_KEY, JSON.stringify(allStatus));
+    return allStatus[index];
+  } catch (error) {
+    console.error('Failed to update payment status:', error);
+    return null;
+  }
 };
 
 // Get all bonuses

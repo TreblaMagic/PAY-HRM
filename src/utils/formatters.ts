@@ -1,4 +1,3 @@
-
 /**
  * Format a number as currency (Naira)
  */
@@ -7,6 +6,7 @@ export const formatCurrency = (amount: number): string => {
     style: 'currency',
     currency: 'NGN',
     minimumFractionDigits: 0,
+    currencyDisplay: 'symbol'
   }).format(amount);
 };
 

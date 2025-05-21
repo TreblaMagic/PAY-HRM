@@ -157,7 +157,7 @@ export function EmployeeForm({ initialData, onSubmit, onCancel }: EmployeeFormPr
             name="salary"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Salary ($)</FormLabel>
+                <FormLabel>Salary (₦)</FormLabel>
                 <FormControl>
                   <Input type="number" {...field} />
                 </FormControl>

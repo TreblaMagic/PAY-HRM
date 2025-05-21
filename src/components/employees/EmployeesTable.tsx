@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   Table,
@@ -20,10 +19,11 @@ interface EmployeesTableProps {
 
 export function EmployeesTable({ employees, onEdit, onDelete }: EmployeesTableProps) {
   const formatSalary = (salary: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-NG', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'NGN',
       minimumFractionDigits: 0,
+      currencyDisplay: 'symbol'
     }).format(salary);
   };
 

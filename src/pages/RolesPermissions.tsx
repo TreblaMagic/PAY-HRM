@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { RolesSidebar } from '@/components/roles/RolesSidebar';
@@ -11,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Spinner } from '@/components/ui/spinner';
+import { RoleDebug } from '@/components/roles/RoleDebug';
 
 const RolesPermissionsPage = () => {
   const { toast } = useToast();
@@ -42,6 +42,8 @@ const RolesPermissionsPage = () => {
     <DashboardLayout title="Roles & Permissions" activePage="roles-permissions">
       <div className="container mx-auto py-6">
         <div className="grid gap-6">
+          {/* <RoleDebug /> */}
+          
           <Tabs defaultValue="users" className="w-full">
             <TabsList>
               <TabsTrigger value="users">User Management</TabsTrigger>

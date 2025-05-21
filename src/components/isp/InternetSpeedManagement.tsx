@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -74,7 +73,7 @@ export const InternetSpeedManagement = ({ speeds, onAddSpeed, onUpdateSpeed }: I
               <thead>
                 <tr className="border-b">
                   <th className="text-left py-2 px-4">Speed (Mbps)</th>
-                  <th className="text-left py-2 px-4">Price ($)</th>
+                  <th className="text-left py-2 px-4">Price (₦)</th>
                   <th className="text-left py-2 px-4 hidden md:table-cell">Description</th>
                   <th className="text-right py-2 px-4">Actions</th>
                 </tr>
@@ -83,7 +82,7 @@ export const InternetSpeedManagement = ({ speeds, onAddSpeed, onUpdateSpeed }: I
                 {sortedSpeeds.map((speed) => (
                   <tr key={speed.id} className="border-b hover:bg-gray-50">
                     <td className="py-2 px-4 font-medium">{speed.mbps}</td>
-                    <td className="py-2 px-4">${speed.price}</td>
+                    <td className="py-2 px-4">₦{speed.price}</td>
                     <td className="py-2 px-4 hidden md:table-cell text-gray-500 truncate max-w-[300px]">
                       {speed.description}
                     </td>
@@ -125,7 +124,7 @@ export const InternetSpeedManagement = ({ speeds, onAddSpeed, onUpdateSpeed }: I
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="price">Price ($)</Label>
+              <Label htmlFor="price">Price (₦)</Label>
               <Input 
                 id="price" 
                 type="number" 

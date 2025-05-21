@@ -142,7 +142,7 @@ const Dashboard = () => {
   return (
     <DashboardLayout title="Dashboard">
       <div className="p-8">
-        <div className="mb-6">
+        {/* <div className="mb-6">
           <div className="w-full md:w-64">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -155,7 +155,7 @@ const Dashboard = () => {
               />
             </div>
           </div>
-        </div>
+        </div> */}
         
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

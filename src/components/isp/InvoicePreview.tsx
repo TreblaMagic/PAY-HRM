@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Invoice } from "@/types/isp";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -126,8 +125,8 @@ const InvoiceContent = ({ invoice }: { invoice: Invoice }) => {
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.description}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{item.quantity}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">${item.unitPrice.toFixed(2)}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">${item.total.toFixed(2)}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">₦{item.unitPrice.toFixed(2)}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">₦{item.total.toFixed(2)}</td>
               </tr>
             ))}
           </tbody>
@@ -138,15 +137,15 @@ const InvoiceContent = ({ invoice }: { invoice: Invoice }) => {
         <div className="w-full md:w-64">
           <div className="flex justify-between py-2">
             <span className="text-gray-600">Subtotal:</span>
-            <span className="font-medium">${invoice.subtotal.toFixed(2)}</span>
+            <span className="font-medium">₦{invoice.subtotal.toFixed(2)}</span>
           </div>
           <div className="flex justify-between py-2">
             <span className="text-gray-600">Tax (10%):</span>
-            <span className="font-medium">${invoice.tax.toFixed(2)}</span>
+            <span className="font-medium">₦{invoice.tax.toFixed(2)}</span>
           </div>
           <div className="flex justify-between py-2 border-t">
             <span className="font-bold">Total:</span>
-            <span className="font-bold">${invoice.total.toFixed(2)}</span>
+            <span className="font-bold">₦{invoice.total.toFixed(2)}</span>
           </div>
         </div>
       </div>

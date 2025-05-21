@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Equipment, InternetSpeed, SetupCost, ManagedService, ServiceSetup } from "@/types/isp";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -174,7 +173,7 @@ export const ServiceSetupForm = ({
               <SelectContent>
                 {equipment.map((item) => (
                   <SelectItem key={item.id} value={item.id}>
-                    {item.name} (${item.price})
+                    {item.name} (₦{item.price})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -197,7 +196,7 @@ export const ServiceSetupForm = ({
                     />
                     <div>
                       <p className="font-medium">{item.equipment.name}</p>
-                      <p className="text-xs text-gray-500">${item.equipment.price} each</p>
+                      <p className="text-xs text-gray-500">₦{item.equipment.price} each</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -246,7 +245,7 @@ export const ServiceSetupForm = ({
             <SelectContent>
               {internetSpeeds.map((speed) => (
                 <SelectItem key={speed.id} value={speed.id}>
-                  {speed.mbps} Mbps - ${speed.price} ({speed.description})
+                  {speed.mbps} Mbps - ₦{speed.price} ({speed.description})
                 </SelectItem>
               ))}
             </SelectContent>
@@ -263,7 +262,7 @@ export const ServiceSetupForm = ({
             <SelectContent>
               {setupCosts.map((setup) => (
                 <SelectItem key={setup.id} value={setup.id}>
-                  {setup.name} - ${setup.price}
+                  {setup.name} - ₦{setup.price}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -281,7 +280,7 @@ export const ServiceSetupForm = ({
               <SelectItem value="none">None</SelectItem>
               {managedServices.map((service) => (
                 <SelectItem key={service.id} value={service.id}>
-                  {service.name} - ${service.price}
+                  {service.name} - ₦{service.price}
                 </SelectItem>
               ))}
             </SelectContent>

@@ -1,10 +1,16 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import AuthForm from '@/components/auth/AuthForm';
+
+const NAV_ITEMS = [
+  { label: 'Home', href: '#home' },
+  { label: 'Services', href: '#services' },
+  { label: 'MVNO', href: '#mvno' },
+  { label: 'Contact', href: '#contact' },
+];
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -37,150 +43,136 @@ const Navbar = () => {
 
   return (
     <>
-      <nav
-        className={`fixed w-full z-50 transition-all duration-300 ${
-          isScrolled ? 'bg-[#002A3A]/90 shadow-md py-2 backdrop-blur-md' : 'bg-transparent py-4'
-        }`}
-      >
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <Link to="/" className="flex items-center">
-                <span className="text-2xl font-bold text-white">BTEL</span>
-                <span className="ml-1 text-2xl font-bold text-[#00D1B2]">.</span>
-              </Link>
-            </div>
+      <header className={`fixed top-0 left-0 w-full z-30 transition-all duration-300 ${
+        isScrolled ? 'bg-[#101f34]/80 border-b border-[#32595e]/40 backdrop-blur-[6px]' : 'bg-transparent'
+      }`}>
+        <div className="flex items-center justify-between gap-6 max-w-[1500px] mx-auto px-6 py-2 h-20">
+          {/* Logo */}
+          <a href="#hero" onClick={(e) => {
+            e.preventDefault();
+            scrollToSection('hero');
+          }} className="flex items-center gap-2 shrink-0">
+          <img
+            alt="Btel logo"
+            src="../public/assets/Bottom Logo1.png"
+            className="h-9 w-auto"
+            style={{ filter: 'brightness(90%)' }}
+          />
+        </a>
 
-            {/* Desktop Menu */}
-            <div className="hidden md:flex items-center space-x-8">
-              <a 
-                onClick={() => scrollToSection('home')} 
-                className="text-white hover:text-[#00D1B2] transition-colors cursor-pointer font-medium"
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex flex-1 items-center gap-2 justify-center">
+            {NAV_ITEMS.map((item) => (
+              <a
+                key={item.label}
+                href={item.href}
+                onClick={(e) => {
+                  e.preventDefault();
+                  scrollToSection(item.href.replace('#', ''));
+                }}
+                className="mx-2 text-sm font-medium tracking-wide text-white hover:text-[#3ba7a6] transition-colors relative group"
               >
-                Home
+                {item.label}
               </a>
-              <a 
-                onClick={() => scrollToSection('services')} 
-                className="text-white hover:text-[#00D1B2] transition-colors cursor-pointer font-medium"
+            ))}
+          </nav>
+
+          {/* Portal Button */}
+          <div className="flex items-center hidden md:block">
+            {user ? (
+              <Link to="/dashboard">
+                <Button 
+                  className="ml-3 px-5 py-2 rounded-full bg-[#1f3f6e] text-[#f3f3f3] font-semibold text-sm shadow hover:bg-[#152945] transition-colors"
+                  style={{ letterSpacing: '0.02em' }}
+                >
+                  Dashboard
+                </Button>
+              </Link>
+            ) : (
+              <Button 
+                onClick={() => setIsLoginOpen(true)}
+                className="ml-3 px-5 py-2 rounded-full bg-[#1f3f6e] text-[#f3f3f3] font-semibold text-sm shadow hover:bg-[#152945] transition-colors"
+                style={{ letterSpacing: '0.02em' }}
               >
-                Services
-              </a>
-              <a 
-                onClick={() => scrollToSection('testimonials')} 
-                className="text-white hover:text-[#00D1B2] transition-colors cursor-pointer font-medium"
-              >
-                Testimonials
-              </a>
-              <a 
-                onClick={() => scrollToSection('contact')} 
-                className="text-white hover:text-[#00D1B2] transition-colors cursor-pointer font-medium"
-              >
-                Contact
-              </a>
+                Portal
+              </Button>
+            )}
+          </div>
+
+          {/* Mobile menu button */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="md:hidden text-white p-2 focus:outline-none"
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              {isMobileMenuOpen ? (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              ) : (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              )}
+            </svg>
+          </button>
+        </div>
+
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden bg-[#101f34] border-t border-[#32595e]/40 backdrop-blur-[6px]">
+            <div className="flex flex-col space-y-4 p-4">
+              {NAV_ITEMS.map((item) => (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    scrollToSection(item.href.replace('#', ''));
+                  }}
+                  className="text-sm font-medium tracking-wide text-white hover:text-[#3ba7a6] transition-colors"
+                >
+                  {item.label}
+                </a>
+              ))}
               {user ? (
                 <Link to="/dashboard">
                   <Button 
-                    className="bg-[#00D1B2] hover:bg-[#00D1B2]/90 text-white font-medium"
+                    className="w-full px-5 py-2 rounded-full bg-[#1f3f6e] text-[#f3f3f3] font-semibold text-sm shadow hover:bg-[#152945] transition-colors"
+                    style={{ letterSpacing: '0.02em' }}
+                    onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Dashboard
                   </Button>
                 </Link>
               ) : (
                 <Button 
-                  onClick={() => setIsLoginOpen(true)}
-                  className="bg-[#00D1B2] hover:bg-[#00D1B2]/90 text-white font-medium"
+                  onClick={() => {
+                    setIsLoginOpen(true);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full px-5 py-2 rounded-full bg-[#1f3f6e] text-[#f3f3f3] font-semibold text-sm shadow hover:bg-[#152945] transition-colors"
+                  style={{ letterSpacing: '0.02em' }}
                 >
                   Portal
                 </Button>
               )}
             </div>
-
-            {/* Mobile menu button */}
-            <div className="md:hidden">
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="text-white p-2 focus:outline-none"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  {isMobileMenuOpen ? (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  ) : (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M4 6h16M4 12h16M4 18h16"
-                    />
-                  )}
-                </svg>
-              </button>
-            </div>
           </div>
-
-          {/* Mobile Menu */}
-          {isMobileMenuOpen && (
-            <div className="md:hidden mt-4 bg-[#002A3A] rounded-lg shadow-lg p-4 absolute left-0 right-0 mx-4 animate-fade-in">
-              <div className="flex flex-col space-y-4">
-                <a 
-                  onClick={() => scrollToSection('home')} 
-                  className="text-white hover:text-[#00D1B2] transition-colors cursor-pointer font-medium"
-                >
-                  Home
-                </a>
-                <a 
-                  onClick={() => scrollToSection('services')} 
-                  className="text-white hover:text-[#00D1B2] transition-colors cursor-pointer font-medium"
-                >
-                  Services
-                </a>
-                <a 
-                  onClick={() => scrollToSection('testimonials')} 
-                  className="text-white hover:text-[#00D1B2] transition-colors cursor-pointer font-medium"
-                >
-                  Testimonials
-                </a>
-                <a 
-                  onClick={() => scrollToSection('contact')} 
-                  className="text-white hover:text-[#00D1B2] transition-colors cursor-pointer font-medium"
-                >
-                  Contact
-                </a>
-                {user ? (
-                  <Link to="/dashboard">
-                    <Button 
-                      className="bg-[#00D1B2] hover:bg-[#00D1B2]/90 text-white font-medium"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      Dashboard
-                    </Button>
-                  </Link>
-                ) : (
-                  <Button 
-                    onClick={() => {
-                      setIsLoginOpen(true);
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="bg-[#00D1B2] hover:bg-[#00D1B2]/90 text-white font-medium"
-                  >
-                    Portal
-                  </Button>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      </nav>
+        )}
+      </header>
 
       {/* Auth Dialog */}
       <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>

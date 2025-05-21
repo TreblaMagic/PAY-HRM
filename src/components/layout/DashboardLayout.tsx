@@ -1,11 +1,11 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Bell, MessageSquare, User, Search } from 'lucide-react';
+import { Bell, MessageSquare, Search } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Sidebar } from './Sidebar';
+import { ProfileDropdown } from '@/components/ProfileDropdown';
 
 type DashboardLayoutProps = {
   children: React.ReactNode;
@@ -24,44 +24,31 @@ const DashboardLayout = ({ children, title, activePage }: DashboardLayoutProps) 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
         {/* Header */}
-        <header className="bg-white border-b border-gray-200 p-4 flex justify-between items-center sticky top-0 z-10">
+        <header className="bg-primary text-white border-b border-primary/20 p-4 flex justify-between items-center sticky top-0 z-10">
           <div className="flex items-center">
-            <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
+            <h1 className="text-2xl font-bold">{title}</h1>
           </div>
           <div className="flex items-center space-x-4">
             <div className="relative w-64">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 text-gray-400" />
+                <Search className="h-4 w-4 text-white/70" />
               </div>
               <Input
                 type="text"
                 placeholder="Search..."
-                className="pl-10 pr-4 py-2 border rounded-md w-full"
+                className="pl-10 pr-4 py-2 border-0 bg-white/10 text-white placeholder:text-white/70 rounded-md w-full focus-visible:ring-white/20"
               />
             </div>
             <div className="relative">
-              <Bell className="h-6 w-6 text-gray-500 cursor-pointer" />
+              <Bell className="h-6 w-6 text-white/90 cursor-pointer hover:text-white" />
               <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
             </div>
             <div className="relative">
-              <MessageSquare className="h-6 w-6 text-gray-500 cursor-pointer" />
+              <MessageSquare className="h-6 w-6 text-white/90 cursor-pointer hover:text-white" />
               <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
             </div>
-            <Separator orientation="vertical" className="h-8" />
-            <div className="flex items-center">
-              <Link to="/profile" className="flex items-center space-x-2">
-                <div className="bg-gray-200 rounded-full p-1">
-                  <User className="h-5 w-5 text-gray-600" />
-                </div>
-                <div className="text-sm">
-                  <p className="font-medium text-gray-700">{user?.user_metadata?.display_name || 'John Doe'}</p>
-                  <p className="text-gray-500 text-xs">HR Manager</p>
-                </div>
-                <svg className="h-4 w-4 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </Link>
-            </div>
+            <Separator orientation="vertical" className="h-8 bg-white/20" />
+            <ProfileDropdown />
           </div>
         </header>
         

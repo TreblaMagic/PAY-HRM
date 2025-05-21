@@ -1,41 +1,79 @@
 import { supabase } from '@/lib/supabaseClient';
-import { UserWithRole, UserRole } from '@/types/role';
+import { UserWithRole, UserRole, rolePermissions } from '@/types/role';
 
 export const fetchUsers = async (): Promise<UserWithRole[]> => {
   try {
-    const { data, error } = await supabase
+    console.log('Fetching users...');
+    // First get all user roles
+    const { data: roleData, error: roleError } = await supabase
       .from('user_roles')
-      .select('*, users:user_id(id, email)') as { data: any, error: any };
+      .select('*') as { data: any[], error: any };
     
-    if (error) {
-      throw error;
+    if (roleError) {
+      console.error('Supabase error fetching user roles:', roleError);
+      throw new Error(`Failed to fetch user roles: ${roleError.message}`);
     }
 
-    // Format the data to match our UserWithRole type
-    return data.map((item: any) => ({
-      id: item.users.id,
-      email: item.users.email,
-      username: item.username || item.users.email.split('@')[0],
-      role: item.role as UserRole,
-      created_at: item.created_at
+    if (!roleData || roleData.length === 0) {
+      console.log('No user roles found');
+      return [];
+    }
+
+    // Get user information from auth for each role
+    const formattedUsers = await Promise.all(roleData.map(async (role) => {
+      const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(role.user_id);
+      
+      if (userError) {
+        console.error(`Error fetching user ${role.user_id}:`, userError);
+        return {
+          id: role.user_id,
+          email: 'Unknown',
+          username: role.username || 'Unknown',
+          role: role.role as UserRole,
+          created_at: role.created_at
+        };
+      }
+
+      return {
+        id: role.user_id,
+        email: user?.email || 'Unknown',
+        username: role.username || (user?.email || 'Unknown').split('@')[0],
+        role: role.role as UserRole,
+        created_at: role.created_at
+      };
     }));
+
+    console.log(`Successfully fetched ${formattedUsers.length} users`);
+    return formattedUsers;
   } catch (error) {
-    console.error('Error fetching users:', error);
-    throw error;
+    console.error('Error in fetchUsers:', error);
+    if (error instanceof Error) {
+      throw new Error(`Failed to load users: ${error.message}`);
+    }
+    throw new Error('Failed to load users: Unknown error occurred');
   }
 };
 
 export const createUser = async (email: string, password: string, username: string, role: UserRole): Promise<void> => {
   try {
-    // Create user in auth system
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    // Create user in auth system using regular signUp
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
-      email_confirm: true
+      options: {
+        data: {
+          username,
+          role
+        }
+      }
     });
     
     if (authError) {
       throw authError;
+    }
+    
+    if (!authData.user) {
+      throw new Error('User creation failed');
     }
     
     // Create user role in the custom table
@@ -48,6 +86,8 @@ export const createUser = async (email: string, password: string, username: stri
       }) as { error: any };
     
     if (roleError) {
+      // If role creation fails, we should clean up the auth user
+      await supabase.auth.admin.deleteUser(authData.user.id);
       throw roleError;
     }
   } catch (error) {
@@ -106,43 +146,20 @@ export const getCurrentUserRole = async (): Promise<UserRole | null> => {
     
     console.log('Session found for user:', session.user.email);
     
+    // First check user metadata for role
+    const userRole = session.user.user_metadata?.role as UserRole;
+    if (userRole && ['HR', 'Finance', 'IT'].includes(userRole)) {
+      console.log('Found role in user metadata:', userRole);
+      return userRole;
+    }
+    
     // Special case for admin user
     if (session.user.email === 'treblamagic@gmail.com') {
       console.log('Admin user detected, assigning IT role directly');
-      
-      // First check if the user already has a role
-      try {
-        const { data: existingRole } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', session.user.id)
-          .single();
-        
-        if (existingRole) {
-          console.log('Found existing role for admin:', existingRole.role);
-          return existingRole.role as UserRole;
-        }
-        
-        // Try to insert IT role for admin
-        const { error: insertError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: session.user.id,
-            username: 'Admin',
-            role: 'IT'
-          });
-        
-        // Return IT role even if there's an error - crucial fix
-        console.log('Admin user - returning IT role');
         return 'IT';
-      } catch (error) {
-        console.error('Error handling admin role:', error);
-        // Always return IT for admin regardless of errors
-        return 'IT';
-      }
     }
     
-    // For non-admin users
+    // For non-admin users, check the user_roles table
     try {
       const { data, error } = await supabase
         .from('user_roles')
@@ -151,28 +168,18 @@ export const getCurrentUserRole = async (): Promise<UserRole | null> => {
         .single();
       
       if (error || !data) {
-        console.log('No role found for user');
+        console.log('No role found in user_roles table');
         return null;
       }
       
-      console.log('Role found for user:', data.role);
+      console.log('Role found in user_roles table:', data.role);
       return data.role as UserRole;
     } catch (error) {
-      console.error('Error getting user role:', error);
+      console.error('Error getting user role from table:', error);
       return null;
     }
   } catch (error) {
     console.error('Error in getCurrentUserRole:', error);
-    // Check if the user is the admin user, return IT role even in case of error
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user.email === 'treblamagic@gmail.com') {
-        console.log('Admin user detected during error recovery, returning IT role');
-        return 'IT';
-      }
-    } catch (e) {
-      console.error('Error in fallback check:', e);
-    }
     return null;
   }
 };
@@ -232,5 +239,56 @@ export const assignITRoleToAdmin = async (email: string): Promise<boolean> => {
   } catch (error) {
     console.error('Error assigning IT role:', error);
     return false;
+  }
+};
+
+export const debugUserRole = async (): Promise<{
+  session: any;
+  role: UserRole | null;
+  permissions: string[] | null;
+  error?: string;
+}> => {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      return {
+        session: null,
+        role: null,
+        permissions: null,
+        error: 'No active session found'
+      };
+    }
+    
+    const { data: roleData, error: roleError } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', session.user.id)
+      .single();
+    
+    if (roleError || !roleData) {
+      return {
+        session: session.user,
+        role: null,
+        permissions: null,
+        error: roleError?.message || 'No role found for user'
+      };
+    }
+    
+    const role = roleData.role as UserRole;
+    const permissions = rolePermissions[role] || null;
+    
+    return {
+      session: session.user,
+      role,
+      permissions
+    };
+  } catch (error) {
+    return {
+      session: null,
+      role: null,
+      permissions: null,
+      error: error instanceof Error ? error.message : 'Unknown error occurred'
+    };
   }
 };
