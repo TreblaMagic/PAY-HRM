@@ -31,7 +31,7 @@ const ProductsServicesSection = () => (
   <section id="services" className="relative z-10 w-full max-w-[1150px] mx-auto flex flex-col items-center mb-14">
     {/* Background image positioned absolutely */}
     <img
-      src="../public/assets/3.png"
+      src="../../public/assets/3.png"
       alt="Background"
       className="absolute inset-0 w-full h-full object-cover rounded-3xl"
       style={{ zIndex: 1 }}
