@@ -35,7 +35,7 @@ const CustodyOrbSection = () => (
     {/* New Image */}
     <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-[300px] h-[300px] flex items-center justify-center pointer-events-none">
       <img 
-        src="../../public/assets/2.png" 
+        src="/assets/2.png" 
         alt="Orb Image" 
         className="object-contain transition-transform duration-300 ease-in-out"
         style={{ transform: 'scale(3.5)' }}
