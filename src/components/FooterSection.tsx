@@ -58,7 +58,7 @@ const FooterSection = () => {
       <div className="max-w-[1500px] mx-auto px-6 flex flex-col md:flex-row gap-10 md:gap-6 py-3">
         <div className="flex-[1.5] flex items-start pt-1">
           <img
-            src="../public/assets/Bottom Logo.png"
+            src="/assets/Bottom Logo.png"
             alt="Btel logo"
             className="h-20 w-auto mb-4 mr-2"
             style={{ filter: 'brightness(90%)'}}
