@@ -3,32 +3,32 @@ import React from 'react';
 const LOGO_LIST = [
   {
     alt: 'NCC',
-    src: '../../public/assets/NCC.png',
+    src: '/assets/NCC.png',
     style: { height: 38, maxWidth: 120 }
   },
   {
     alt: 'MTN',
-    src: '../../public/assets/MTN.png',
+    src: '/assets/MTN.png',
     style: { height: 28, maxWidth: 70 }
   },
   {
     alt: 'Airtel',
-    src: '../../public/assets/Airtel.png',
+    src: '/assets/Airtel.png',
     style: { height: 27, maxWidth: 57 }
   },
   {
     alt: '9Mobile',
-    src: '../../public/assets/9Mobile.png',
+    src: '/assets/9Mobile.png',
     style: { height: 38, maxWidth: 120 }
   },
   {
     alt: 'MainOne',
-    src: '../../public/assets/MainOne.png',
+    src: '/assets/MainOne.png',
     style: { height: 36, maxWidth: 95 }
   },
   {
     alt: 'Effortel',
-    src: '../../public/assets/Effortel.png',
+    src: '/assets/Effortel.png',
     style: { height: 26, maxWidth: 80 }
   }
 ];
@@ -37,7 +37,7 @@ const HeroSection = () => {
   return (
     <section id="hero" className="relative flex flex-col items-center justify-center text-center min-h-[85vh] w-full">
       <img 
-            src="../../public/assets/1.png" 
+            src="/assets/1.png" 
             alt="Background" 
             className="absolute inset-0 w-full h-full object-cover -z-5" 
           />
