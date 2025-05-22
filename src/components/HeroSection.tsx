@@ -2,33 +2,33 @@ import React from 'react';
 
 const LOGO_LIST = [
   {
-    alt: 'Northern Trust',
-    src: '../public/assets/NCC.png',
+    alt: 'NCC',
+    src: '../../public/assets/NCC.png',
     style: { height: 38, maxWidth: 120 }
   },
   {
-    alt: 'SBI',
-    src: '../public/assets/MTN.png',
+    alt: 'MTN',
+    src: '../../public/assets/MTN.png',
     style: { height: 28, maxWidth: 70 }
   },
   {
-    alt: 'nab',
-    src: '../public/assets/Airtel.png',
+    alt: 'Airtel',
+    src: '../../public/assets/Airtel.png',
     style: { height: 27, maxWidth: 57 }
   },
   {
-    alt: 'Emirates NBD',
-    src: '../public/assets/9Mobile.png',
+    alt: '9Mobile',
+    src: '../../public/assets/9Mobile.png',
     style: { height: 38, maxWidth: 120 }
   },
   {
-    alt: 'Invesco',
-    src: '../public/assets/MainOne.png',
+    alt: 'MainOne',
+    src: '../../public/assets/MainOne.png',
     style: { height: 36, maxWidth: 95 }
   },
   {
-    alt: '21shares',
-    src: '../public/assets/Effortel.png',
+    alt: 'Effortel',
+    src: '../../public/assets/Effortel.png',
     style: { height: 26, maxWidth: 80 }
   }
 ];
@@ -37,7 +37,7 @@ const HeroSection = () => {
   return (
     <section id="hero" className="relative flex flex-col items-center justify-center text-center min-h-[85vh] w-full">
       <img 
-            src="../public/assets/1.png" 
+            src="../../public/assets/1.png" 
             alt="Background" 
             className="absolute inset-0 w-full h-full object-cover -z-5" 
           />
