@@ -54,7 +54,7 @@ const Navbar = () => {
           }} className="flex items-center gap-2 shrink-0">
           <img
             alt="Btel logo"
-            src="../public/assets/Bottom Logo1.png"
+            src="/assets/Bottom Logo1.png"
             className="h-9 w-auto"
             style={{ filter: 'brightness(90%)' }}
           />
