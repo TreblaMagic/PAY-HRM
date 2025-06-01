@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from '@/contexts/AuthContext';
 import { getAllEmployees } from "@/services/employeeService";
@@ -8,16 +7,42 @@ import { PayrollTable } from "@/components/payroll/PayrollTable";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { Spinner } from "@/components/ui/spinner";
+import { Employee } from "@/types/employee";
 
 export default function Payroll() {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
-  const employees = getAllEmployees();
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  if (loading) {
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const fetchedEmployees = await getAllEmployees();
+        console.log('Fetched employees in Payroll:', fetchedEmployees); // Debug log
+        
+        if (Array.isArray(fetchedEmployees)) {
+          setEmployees(fetchedEmployees);
+        } else {
+          console.error('Fetched employees is not an array:', fetchedEmployees);
+          setEmployees([]);
+        }
+      } catch (error) {
+        console.error('Error fetching employees:', error);
+        setEmployees([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEmployees();
+  }, []);
+
+  if (authLoading || isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="h-screen w-screen flex items-center justify-center">
+        <Spinner />
       </div>
     );
   }
@@ -26,11 +51,13 @@ export default function Payroll() {
     return <Navigate to="/" replace />;
   }
 
-  const filteredEmployees = employees.filter(employee =>
+  // Add safety check before filtering
+  console.log('Employees before filtering:', employees); // Debug log
+  const filteredEmployees = Array.isArray(employees) ? employees.filter(employee =>
     employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     employee.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
     employee.position.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ) : [];
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);

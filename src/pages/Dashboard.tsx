@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
@@ -12,17 +11,22 @@ import { getAllEmployees } from '@/services/employeeService';
 import { getAllAttendance } from '@/services/attendanceService';
 import { getAllLeaveRecords } from '@/services/leaveService';
 import { formatCurrency } from '@/utils/formatters';
+import { Spinner } from '@/components/ui/spinner';
+
+interface DashboardData {
+  totalEmployees: number;
+  totalSalaries: number;
+}
 
 const Dashboard = () => {
   const { user, loading: authLoading } = useAuth();
   const { loading: roleLoading } = useRole();
   const [searchQuery, setSearchQuery] = useState('');
-  const [dashboardData, setDashboardData] = useState({
+  const [dashboardData, setDashboardData] = useState<DashboardData>({
     totalEmployees: 0,
-    todayAttendance: 0,
-    onLeaveToday: 0,
-    payrollProcessed: 0
+    totalSalaries: 0,
   });
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     console.log('Dashboard component rendered', { user });
@@ -31,50 +35,31 @@ const Dashboard = () => {
     }
   }, [user]);
 
-  const loadDashboardData = () => {
-    // Get total employees
-    const employees = getAllEmployees();
-    
-    // Get today's attendance
-    const attendanceRecords = getAllAttendance();
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayAttendance = attendanceRecords.filter(record => {
-      const recordDate = new Date(record.date);
-      recordDate.setHours(0, 0, 0, 0);
-      return recordDate.getTime() === today.getTime();
-    }).length;
-    
-    // Get employees on leave today
-    const leaveRecords = getAllLeaveRecords();
-    const onLeaveToday = leaveRecords.filter(record => {
-      const startDate = new Date(record.startDate);
-      const endDate = new Date(record.endDate);
-      startDate.setHours(0, 0, 0, 0);
-      endDate.setHours(0, 0, 0, 0);
-      return (
-        record.status === "Approved" &&
-        today >= startDate &&
-        today <= endDate
-      );
-    }).length;
-    
-    // Calculate total payroll processed
-    const totalSalaries = employees.reduce((total, emp) => total + emp.salary, 0);
-    
-    setDashboardData({
-      totalEmployees: employees.length,
-      todayAttendance,
-      onLeaveToday,
-      payrollProcessed: totalSalaries
-    });
+  const loadDashboardData = async () => {
+    try {
+      const employees = await getAllEmployees();
+      
+      // Calculate total payroll processed
+      const totalSalaries = Array.isArray(employees) 
+        ? employees.reduce((total, emp) => total + (emp.salary || 0), 0) 
+        : 0;
+      
+      setDashboardData({
+        totalEmployees: Array.isArray(employees) ? employees.length : 0,
+        totalSalaries,
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // If still loading, show a spinner
-  if (authLoading || roleLoading) {
+  if (authLoading || roleLoading || isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="h-screen w-screen flex items-center justify-center">
+        <Spinner />
       </div>
     );
   }
@@ -95,24 +80,8 @@ const Dashboard = () => {
       trendUp: true 
     },
     { 
-      title: 'Today\'s Attendance', 
-      value: `${dashboardData.todayAttendance > 0 
-        ? Math.round((dashboardData.todayAttendance / dashboardData.totalEmployees) * 100) 
-        : 0}%`, 
-      icon: 'clipboard', 
-      trend: '3% from yesterday', 
-      trendUp: true 
-    },
-    { 
-      title: 'On Leave Today', 
-      value: dashboardData.onLeaveToday.toString(), 
-      icon: 'calendar', 
-      trend: '5% from last week', 
-      trendUp: true 
-    },
-    { 
-      title: 'Payroll Processed', 
-      value: formatCurrency(dashboardData.payrollProcessed), 
+      title: 'Total Payroll', 
+      value: formatCurrency(dashboardData.totalSalaries), 
       icon: 'file', 
       trend: '8% from last month', 
       trendUp: true 

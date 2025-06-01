@@ -1,4 +1,3 @@
-
 import { LeaveRecord, EmployeeLeaveBalance } from "@/types/leave";
 import { Employee } from "@/types/employee";
 import { getAllEmployees } from "./employeeService";
@@ -65,22 +64,20 @@ export const getEmployeeLeaveRecords = (employeeId: string): LeaveRecord[] => {
 };
 
 // Calculate leave balance for each employee
-export const calculateEmployeeLeaveBalances = (): EmployeeLeaveBalance[] => {
-  const employees = getAllEmployees();
+export const calculateEmployeeLeaveBalances = (employees: Employee[]): EmployeeLeaveBalance[] => {
+  if (!Array.isArray(employees)) return [];
   const allLeaveRecords = getAllLeaveRecords();
-  
   return employees.map(employee => {
+    const totalDays = typeof employee.leaveDaysAllocated === 'number' ? employee.leaveDaysAllocated : 15;
     const employeeLeaves = allLeaveRecords.filter(
       record => record.employeeId === employee.id && record.status === "Approved"
     );
-    
     const usedDays = employeeLeaves.reduce((total, record) => total + record.daysUsed, 0);
-    const remainingDays = TOTAL_ANNUAL_LEAVE_DAYS - usedDays;
-    
+    const remainingDays = totalDays - usedDays;
     return {
       employeeId: employee.id,
       employeeName: employee.name,
-      totalDays: TOTAL_ANNUAL_LEAVE_DAYS,
+      totalDays,
       usedDays,
       remainingDays
     };

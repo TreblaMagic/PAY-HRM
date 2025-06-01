@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Employee } from '@/types/employee';
 import { calculateAnnualSalary, countPaidMonths } from '@/services/payrollService';
 import {
@@ -15,6 +14,7 @@ import { User, DollarSign, CalendarCheck } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatters';
 import { PaymentStatusDialog } from './PaymentStatusDialog';
 import { BonusDialog } from './BonusDialog';
+import { Spinner } from '@/components/ui/spinner';
 
 interface PayrollTableProps {
   employees: Employee[];
@@ -24,6 +24,46 @@ export const PayrollTable = ({ employees }: PayrollTableProps) => {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [isBonusDialogOpen, setIsBonusDialogOpen] = useState(false);
+  const [paidMonths, setPaidMonths] = useState<Record<string, number>>({});
+  const [annualSalaries, setAnnualSalaries] = useState<Record<string, number>>({});
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const monthsPromises = employees.map(emp => 
+          countPaidMonths(emp.id).then(count => ({ id: emp.id, count }))
+        );
+        const salaryPromises = employees.map(emp => 
+          calculateAnnualSalary(emp).then(salary => ({ id: emp.id, salary }))
+        );
+
+        const [monthsResults, salaryResults] = await Promise.all([
+          Promise.all(monthsPromises),
+          Promise.all(salaryPromises)
+        ]);
+
+        const monthsMap = monthsResults.reduce((acc, { id, count }) => ({
+          ...acc,
+          [id]: count
+        }), {});
+
+        const salaryMap = salaryResults.reduce((acc, { id, salary }) => ({
+          ...acc,
+          [id]: salary
+        }), {});
+
+        setPaidMonths(monthsMap);
+        setAnnualSalaries(salaryMap);
+      } catch (error) {
+        console.error('Error fetching payroll data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [employees]);
 
   const openPaymentDialog = (employee: Employee) => {
     setSelectedEmployee(employee);
@@ -34,6 +74,14 @@ export const PayrollTable = ({ employees }: PayrollTableProps) => {
     setSelectedEmployee(employee);
     setIsBonusDialogOpen(true);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Spinner />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -77,15 +125,15 @@ export const PayrollTable = ({ employees }: PayrollTableProps) => {
                     {formatCurrency(employee.salary)}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
-                    {formatCurrency(calculateAnnualSalary(employee))}
+                    {formatCurrency(annualSalaries[employee.id] || 0)}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     <div className="flex items-center">
                       <CalendarCheck className="mr-2 h-4 w-4 text-green-500" />
-                      <span>{countPaidMonths(employee.id)} / 12 months</span>
+                      <span>{paidMonths[employee.id] || 0} / 12 months</span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell>
                     <div className="flex justify-end gap-2">
                       <Button variant="outline" size="sm" onClick={() => openPaymentDialog(employee)}>
                         Payment Status

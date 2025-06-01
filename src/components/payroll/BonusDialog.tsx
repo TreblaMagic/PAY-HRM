@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Employee } from '@/types/employee';
 import { Bonus } from '@/types/payroll';
@@ -41,17 +40,16 @@ export const BonusDialog = ({ isOpen, onClose, employee }: BonusDialogProps) => 
     }
   }, [isOpen, employee.id]);
 
-  const loadBonuses = () => {
-    const employeeBonuses = getEmployeeBonuses(employee.id);
-    setBonuses(employeeBonuses);
-    setTotalBonus(calculateTotalBonuses(employee.id));
-    
-    // Reset form fields
+  const loadBonuses = async () => {
+    const employeeBonuses = await getEmployeeBonuses(employee.id);
+    setBonuses(Array.isArray(employeeBonuses) ? employeeBonuses : []);
+    const total = await calculateTotalBonuses(employee.id);
+    setTotalBonus(typeof total === 'number' ? total : 0);
     setNewAmount("");
     setNewReason("");
   };
   
-  const handleAddBonus = () => {
+  const handleAddBonus = async () => {
     if (!newAmount || !newReason) {
       toast({
         title: "Missing information",
@@ -71,7 +69,7 @@ export const BonusDialog = ({ isOpen, onClose, employee }: BonusDialogProps) => 
       return;
     }
     
-    addBonus({
+    await addBonus({
       employeeId: employee.id,
       amount,
       reason: newReason,
@@ -83,12 +81,12 @@ export const BonusDialog = ({ isOpen, onClose, employee }: BonusDialogProps) => 
       description: `Bonus of ${formatCurrency(amount)} added for ${employee.name}.`
     });
     
-    loadBonuses();
+    await loadBonuses();
   };
   
-  const handleDeleteBonus = (bonusId: string) => {
-    deleteBonus(bonusId);
-    loadBonuses();
+  const handleDeleteBonus = async (bonusId: string) => {
+    await deleteBonus(bonusId);
+    await loadBonuses();
     
     toast({
       title: "Bonus deleted",
@@ -148,11 +146,11 @@ export const BonusDialog = ({ isOpen, onClose, employee }: BonusDialogProps) => 
               </div>
             </div>
             
-            {bonuses.length === 0 ? (
+            {Array.isArray(bonuses) && bonuses.length === 0 ? (
               <p className="text-center text-muted-foreground py-6">No bonus history found</p>
             ) : (
               <div className="space-y-3">
-                {bonuses.map((bonus) => (
+                {Array.isArray(bonuses) ? bonuses.map((bonus) => (
                   <div key={bonus.id} className="flex items-center justify-between border p-3 rounded-md">
                     <div className="space-y-1">
                       <div className="font-medium">{formatCurrency(bonus.amount)}</div>
@@ -166,7 +164,7 @@ export const BonusDialog = ({ isOpen, onClose, employee }: BonusDialogProps) => 
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
-                ))}
+                )) : null}
               </div>
             )}
           </div>

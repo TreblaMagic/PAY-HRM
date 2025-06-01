@@ -1,4 +1,3 @@
-
 export type Employee = {
   id: string;
   name: string;
@@ -8,4 +7,5 @@ export type Employee = {
   phone: string;
   hireDate: string;
   salary: number;
+  leaveDaysAllocated?: number;
 }

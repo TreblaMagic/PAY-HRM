@@ -19,42 +19,89 @@ import { Employee } from '@/types/employee';
 import { Document, DocumentCategory } from '@/types/document';
 import { User } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import { Spinner } from '@/components/ui/spinner';
 
 export default function Documents() {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const allEmployees = getAllEmployees();
-    setEmployees(allEmployees);
-    
-    // If there are employees but none selected, select the first one
-    if (allEmployees.length > 0 && !selectedEmployeeId) {
-      setSelectedEmployeeId(allEmployees[0].id);
-    }
+    const fetchEmployees = async () => {
+      try {
+        const fetchedEmployees = await getAllEmployees();
+        console.log('Fetched employees:', fetchedEmployees); // Debug log
+        
+        if (Array.isArray(fetchedEmployees)) {
+          setEmployees(fetchedEmployees);
+          
+          // If there are employees but none selected, select the first one
+          if (fetchedEmployees.length > 0 && !selectedEmployeeId) {
+            setSelectedEmployeeId(fetchedEmployees[0].id);
+          }
+        } else {
+          console.error('Fetched employees is not an array:', fetchedEmployees);
+          setEmployees([]);
+        }
+      } catch (error) {
+        console.error('Error fetching employees:', error);
+        setEmployees([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEmployees();
   }, []);
 
   useEffect(() => {
-    if (selectedEmployeeId) {
-      const employeeDocs = getEmployeeDocuments(selectedEmployeeId);
-      setDocuments(employeeDocs);
-    } else {
-      setDocuments([]);
-    }
+    const fetchDocuments = async () => {
+      if (selectedEmployeeId) {
+        try {
+          const employeeDocs = await getEmployeeDocuments(selectedEmployeeId);
+          console.log('Fetched documents:', employeeDocs); // Debug log
+          
+          if (Array.isArray(employeeDocs)) {
+            setDocuments(employeeDocs);
+          } else {
+            console.error('Fetched documents is not an array:', employeeDocs);
+            setDocuments([]);
+          }
+        } catch (error) {
+          console.error('Error fetching documents:', error);
+          setDocuments([]);
+        }
+      } else {
+        setDocuments([]);
+      }
+    };
+
+    fetchDocuments();
   }, [selectedEmployeeId]);
 
-  const refreshDocuments = () => {
+  const refreshDocuments = async () => {
     if (selectedEmployeeId) {
-      setDocuments(getEmployeeDocuments(selectedEmployeeId));
+      try {
+        const employeeDocs = await getEmployeeDocuments(selectedEmployeeId);
+        if (Array.isArray(employeeDocs)) {
+          setDocuments(employeeDocs);
+        } else {
+          console.error('Refreshed documents is not an array:', employeeDocs);
+          setDocuments([]);
+        }
+      } catch (error) {
+        console.error('Error refreshing documents:', error);
+        setDocuments([]);
+      }
     }
   };
 
   // Filter documents based on search and category
-  const filteredDocuments = documents.filter(doc => {
+  const filteredDocuments = Array.isArray(documents) ? documents.filter(doc => {
     const matchesSearch = searchQuery === '' || 
       doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       doc.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -63,12 +110,12 @@ export default function Documents() {
     const matchesCategory = !selectedCategory || doc.category === selectedCategory;
     
     return matchesSearch && matchesCategory;
-  });
+  }) : [];
 
-  if (loading) {
+  if (authLoading || isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="h-screen w-screen flex items-center justify-center">
+        <Spinner />
       </div>
     );
   }
@@ -92,7 +139,7 @@ export default function Documents() {
                 <SelectValue placeholder="Select an employee" />
               </SelectTrigger>
               <SelectContent>
-                {employees.map((employee) => (
+                {Array.isArray(employees) && employees.map((employee) => (
                   <SelectItem key={employee.id} value={employee.id}>
                     {employee.name} - {employee.position}
                   </SelectItem>
@@ -154,7 +201,7 @@ export default function Documents() {
                   <SelectValue placeholder="Select an employee" />
                 </SelectTrigger>
                 <SelectContent>
-                  {employees.map((employee) => (
+                  {Array.isArray(employees) && employees.map((employee) => (
                     <SelectItem key={employee.id} value={employee.id}>
                       {employee.name} - {employee.position}
                     </SelectItem>

@@ -1,14 +1,15 @@
-
 import { Button } from "@/components/ui/button";
 import { EmployeeDialog } from "@/components/employees/EmployeeDialog";
 import { DeleteConfirmationDialog } from "@/components/employees/DeleteConfirmationDialog";
 import { useNavigate } from "react-router-dom";
 import { EmployeeTable } from "./EmployeeTable";
 import { useEmployees } from "@/hooks/useEmployees";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function RecentEmployees() {
   const {
     employees,
+    isLoading,
     selectedEmployee,
     isEditDialogOpen,
     isDeleteDialogOpen,
@@ -36,11 +37,23 @@ export function RecentEmployees() {
         </Button>
       </div>
       
-      <EmployeeTable 
-        employees={employees}
-        onEdit={openEditDialog}
-        onDelete={openDeleteDialog}
-      />
+      {isLoading ? (
+        <div className="p-4 space-y-2">
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
+        </div>
+      ) : employees.length === 0 ? (
+        <div className="p-4 text-center text-muted-foreground">
+          No employees found
+        </div>
+      ) : (
+        <EmployeeTable 
+          employees={employees}
+          onEdit={openEditDialog}
+          onDelete={openDeleteDialog}
+        />
+      )}
 
       <EmployeeDialog
         isOpen={isEditDialogOpen}

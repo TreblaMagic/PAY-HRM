@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,19 +6,22 @@ import { LeaveBalanceTable } from "@/components/leave/LeaveBalanceTable";
 import { LeaveHistoryTable } from "@/components/leave/LeaveHistoryTable";
 import { LeaveUpdateForm } from "@/components/leave/LeaveUpdateForm";
 import { EmployeeLeaveBalance, LeaveRecord } from "@/types/leave";
-import { getAllEmployees } from "@/services/employeeService";
+import { getAllEmployees, updateEmployee } from "@/services/employeeService";
 import { 
   calculateEmployeeLeaveBalances, 
   getAllLeaveRecords, 
-  addLeaveRecord 
+  addLeaveRecord,
+  deleteLeaveRecord
 } from "@/services/leaveService";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
+import { Employee } from "@/types/employee";
 
 export default function LeaveManagement() {
   const { user, loading } = useAuth();
-  const [employees, setEmployees] = useState(getAllEmployees());
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [isLoadingEmployees, setIsLoadingEmployees] = useState(true);
   const [leaveBalances, setLeaveBalances] = useState<EmployeeLeaveBalance[]>([]);
   const [leaveRecords, setLeaveRecords] = useState<LeaveRecord[]>([]);
   const [isUpdateFormOpen, setIsUpdateFormOpen] = useState(false);
@@ -27,20 +29,44 @@ export default function LeaveManagement() {
   const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
-    // Load initial data
-    refreshData();
+    fetchEmployeesAndData();
   }, []);
 
-  const refreshData = () => {
-    const employees = getAllEmployees();
-    setEmployees(employees);
-    setLeaveBalances(calculateEmployeeLeaveBalances());
-    setLeaveRecords(getAllLeaveRecords());
+  const fetchEmployeesAndData = async () => {
+    setIsLoadingEmployees(true);
+    try {
+      const data = await getAllEmployees();
+      const employeesArray = Array.isArray(data) ? data : [];
+      setEmployees(employeesArray);
+      setLeaveBalances(calculateEmployeeLeaveBalances(employeesArray));
+      setLeaveRecords(getAllLeaveRecords());
+    } catch (e) {
+      setEmployees([]);
+      setLeaveBalances([]);
+      setLeaveRecords([]);
+    } finally {
+      setIsLoadingEmployees(false);
+    }
+  };
+
+  const refreshData = async () => {
+    await fetchEmployeesAndData();
   };
 
   const handleUpdateLeave = (employeeId: string) => {
     setSelectedEmployeeId(employeeId);
     setIsUpdateFormOpen(true);
+  };
+
+  const handleUpdateLeaveDays = async (employeeId: string, newTotalDays: number) => {
+    try {
+      const employee = employees.find(emp => emp.id === employeeId);
+      if (!employee) return;
+      await updateEmployee({ ...employee, leaveDaysAllocated: newTotalDays });
+      refreshData();
+    } catch (error) {
+      console.error('Error updating leave days:', error);
+    }
   };
 
   const handleLeaveSubmit = (data: {
@@ -80,7 +106,16 @@ export default function LeaveManagement() {
     });
   };
 
-  if (loading) {
+  const handleDeleteLeave = (leaveId: string) => {
+    deleteLeaveRecord(leaveId);
+    refreshData();
+    toast({
+      title: "Leave Deleted",
+      description: `Leave record has been deleted.`,
+    });
+  };
+
+  if (loading || isLoadingEmployees) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -149,6 +184,7 @@ export default function LeaveManagement() {
                 <LeaveBalanceTable 
                   leaveBalances={leaveBalances}
                   onUpdateLeave={handleUpdateLeave}
+                  onUpdateLeaveDays={handleUpdateLeaveDays}
                 />
               </div>
             </TabsContent>
@@ -159,6 +195,7 @@ export default function LeaveManagement() {
                 <LeaveHistoryTable 
                   leaveRecords={leaveRecords}
                   employees={employees}
+                  onDeleteLeave={handleDeleteLeave}
                 />
               </div>
             </TabsContent>

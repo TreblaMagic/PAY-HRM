@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   Dialog,
@@ -107,11 +106,17 @@ export function LeaveUpdateForm({
               required
             >
               <option value="">Select Employee</option>
-              {employees.map((employee) => (
-                <option key={employee.id} value={employee.id}>
-                  {employee.name}
+              {Array.isArray(employees) && employees.length > 0 ? (
+                employees.map((employee) => (
+                  <option key={employee.id} value={employee.id}>
+                    {employee.name}
+                  </option>
+                ))
+              ) : (
+                <option value="" disabled>
+                  {employees && employees.length === 0 ? 'No employees found' : 'Loading...'}
                 </option>
-              ))}
+              )}
             </select>
           </div>
 

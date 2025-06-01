@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Employee } from '@/types/employee';
 import { 
   calculateAnnualSalary, 
@@ -9,19 +8,75 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/utils/formatters';
 import { DollarSign, Users, CheckCheck, Gift } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 
 interface PayrollSummaryProps {
   employees: Employee[];
 }
 
 export const PayrollSummary = ({ employees }: PayrollSummaryProps) => {
-  const totalMonthlySalaries = employees.reduce((sum, emp) => sum + emp.salary, 0);
-  const totalAnnualSalaries = employees.reduce((sum, emp) => sum + calculateAnnualSalary(emp), 0);
-  const totalBonusesPaid = employees.reduce((sum, emp) => sum + calculateTotalBonuses(emp.id), 0);
+  const [totalPayments, setTotalPayments] = useState(0);
+  const [totalAnnualSalaries, setTotalAnnualSalaries] = useState(0);
+  const [totalBonusesPaid, setTotalBonusesPaid] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const calculateTotals = async () => {
+      try {
+        if (!Array.isArray(employees)) {
+          console.error('Employees is not an array:', employees);
+          return;
+        }
+
+        // Calculate total payments
+        const paymentsPromises = employees.map(emp => countPaidMonths(emp.id));
+        const payments = await Promise.all(paymentsPromises);
+        const totalPaid = payments.reduce((sum, count) => sum + count, 0);
+        setTotalPayments(totalPaid);
+
+        // Calculate total annual salaries
+        const salaryPromises = employees.map(emp => calculateAnnualSalary(emp));
+        const salaries = await Promise.all(salaryPromises);
+        const totalAnnual = salaries.reduce((sum, salary) => sum + salary, 0);
+        setTotalAnnualSalaries(totalAnnual);
+
+        // Calculate total bonuses
+        const bonusPromises = employees.map(emp => calculateTotalBonuses(emp.id));
+        const bonuses = await Promise.all(bonusPromises);
+        const totalBonuses = bonuses.reduce((sum, bonus) => sum + bonus, 0);
+        setTotalBonusesPaid(totalBonuses);
+      } catch (error) {
+        console.error('Error calculating totals:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    calculateTotals();
+  }, [employees]);
+
+  const totalMonthlySalaries = Array.isArray(employees) 
+    ? employees.reduce((sum, emp) => sum + (emp.salary || 0), 0) 
+    : 0;
   
-  const totalPayments = employees.reduce((sum, emp) => sum + countPaidMonths(emp.id), 0);
   const maxPossiblePayments = employees.length * 12;
   const paymentRate = maxPossiblePayments > 0 ? (totalPayments / maxPossiblePayments) * 100 : 0;
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {[...Array(4)].map((_, i) => (
+          <Card key={i}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-center h-24">
+                <Spinner />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
   
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

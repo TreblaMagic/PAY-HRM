@@ -21,6 +21,13 @@ import {
   updateInternetSpeed,
   updateMarkupSettings
 } from '@/services/isp';
+import { SetupCostManagement } from '@/components/isp/SetupCostManagement';
+import { ManagedServiceManagement } from '@/components/isp/ManagedServiceManagement';
+import {
+  getSetupCosts, addSetupCost, updateSetupCost, deleteSetupCost,
+  getManagedServices, addManagedService, updateManagedService, deleteManagedService
+} from '@/services/isp/settingsService';
+import { SetupCost, ManagedService } from '@/types/isp';
 
 const ISPSettings = () => {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
@@ -31,6 +38,8 @@ const ISPSettings = () => {
     setupMarkup: 0,
     managedServicesMarkup: 0
   });
+  const [setupCosts, setSetupCosts] = useState<SetupCost[]>([]);
+  const [managedServices, setManagedServices] = useState<ManagedService[]>([]);
   const [loading, setLoading] = useState(true);
   
   const { toast } = useToast();
@@ -39,15 +48,19 @@ const ISPSettings = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [equipData, speedsData, markupData] = await Promise.all([
+        const [equipData, speedsData, markupData, setupCostData, managedServiceData] = await Promise.all([
           getEquipment(),
           getInternetSpeeds(),
-          getMarkupSettings()
+          getMarkupSettings(),
+          getSetupCosts(),
+          getManagedServices()
         ]);
         
         setEquipment(equipData);
         setInternetSpeeds(speedsData);
         setMarkupSettings(markupData);
+        setSetupCosts(setupCostData);
+        setManagedServices(managedServiceData);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -159,6 +172,42 @@ const ISPSettings = () => {
     }
   };
   
+  const handleAddSetupCost = async (cost: Omit<SetupCost, 'id'>) => {
+    await addSetupCost(cost);
+    setSetupCosts(await getSetupCosts());
+    toast({ title: "Success", description: "Setup cost added." });
+  };
+  
+  const handleUpdateSetupCost = async (cost: SetupCost) => {
+    await updateSetupCost(cost);
+    setSetupCosts(await getSetupCosts());
+    toast({ title: "Success", description: "Setup cost updated." });
+  };
+  
+  const handleDeleteSetupCost = async (id: string) => {
+    await deleteSetupCost(id);
+    setSetupCosts(await getSetupCosts());
+    toast({ title: "Success", description: "Setup cost deleted." });
+  };
+  
+  const handleAddManagedService = async (service: Omit<ManagedService, 'id'>) => {
+    await addManagedService(service);
+    setManagedServices(await getManagedServices());
+    toast({ title: "Success", description: "Managed service added." });
+  };
+  
+  const handleUpdateManagedService = async (service: ManagedService) => {
+    await updateManagedService(service);
+    setManagedServices(await getManagedServices());
+    toast({ title: "Success", description: "Managed service updated." });
+  };
+  
+  const handleDeleteManagedService = async (id: string) => {
+    await deleteManagedService(id);
+    setManagedServices(await getManagedServices());
+    toast({ title: "Success", description: "Managed service deleted." });
+  };
+  
   const goBack = () => {
     navigate('/isp');
   };
@@ -203,6 +252,20 @@ const ISPSettings = () => {
             speeds={internetSpeeds}
             onAddSpeed={handleAddSpeed}
             onUpdateSpeed={handleUpdateSpeed}
+          />
+          
+          <SetupCostManagement
+            setupCosts={setupCosts}
+            onAdd={handleAddSetupCost}
+            onUpdate={handleUpdateSetupCost}
+            onDelete={handleDeleteSetupCost}
+          />
+          
+          <ManagedServiceManagement
+            managedServices={managedServices}
+            onAdd={handleAddManagedService}
+            onUpdate={handleUpdateManagedService}
+            onDelete={handleDeleteManagedService}
           />
           
           <Card>

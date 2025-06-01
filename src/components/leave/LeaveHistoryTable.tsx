@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   Table,
@@ -9,16 +8,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Calendar } from "lucide-react";
+import { Calendar, Trash2 } from "lucide-react";
 import { LeaveRecord } from "@/types/leave";
 import { Employee } from "@/types/employee";
+import { Button } from "@/components/ui/button";
 
 interface LeaveHistoryTableProps {
   leaveRecords: LeaveRecord[];
   employees: Employee[];
+  onDeleteLeave: (leaveId: string) => void;
 }
 
-export function LeaveHistoryTable({ leaveRecords, employees }: LeaveHistoryTableProps) {
+export function LeaveHistoryTable({ leaveRecords, employees, onDeleteLeave }: LeaveHistoryTableProps) {
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat("en-US", {
       year: "numeric",
@@ -56,16 +57,17 @@ export function LeaveHistoryTable({ leaveRecords, employees }: LeaveHistoryTable
             <TableHead className="hidden md:table-cell">Reason</TableHead>
             <TableHead className="hidden md:table-cell">Status</TableHead>
             <TableHead className="hidden md:table-cell">Date Requested</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {leaveRecords.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-8">
+              <TableCell colSpan={7} className="text-center py-8">
                 No leave records found
               </TableCell>
             </TableRow>
-          ) : (
+          ) :
             leaveRecords.map((record) => (
               <TableRow key={record.id}>
                 <TableCell>
@@ -94,9 +96,14 @@ export function LeaveHistoryTable({ leaveRecords, employees }: LeaveHistoryTable
                 <TableCell className="hidden md:table-cell">
                   {formatDate(record.createdAt)}
                 </TableCell>
+                <TableCell className="text-right">
+                  <Button variant="ghost" size="icon" onClick={() => onDeleteLeave(record.id)}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </TableCell>
               </TableRow>
             ))
-          )}
+          }
         </TableBody>
       </Table>
     </div>
