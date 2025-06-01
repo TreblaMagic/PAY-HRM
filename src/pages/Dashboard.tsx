@@ -20,13 +20,15 @@ interface DashboardData {
 
 const Dashboard = () => {
   const { user, loading: authLoading } = useAuth();
-  const { loading: roleLoading } = useRole();
+  const { loading: roleLoading, userRole } = useRole();
   const [searchQuery, setSearchQuery] = useState('');
   const [dashboardData, setDashboardData] = useState<DashboardData>({
     totalEmployees: 0,
     totalSalaries: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [todayAttendance, setTodayAttendance] = useState(0);
+  const [onLeaveToday, setOnLeaveToday] = useState(0);
 
   useEffect(() => {
     console.log('Dashboard component rendered', { user });
@@ -44,6 +46,28 @@ const Dashboard = () => {
         ? employees.reduce((total, emp) => total + (emp.salary || 0), 0) 
         : 0;
       
+      // Attendance
+      const attendanceRecords = await getAllAttendance();
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      const todayAttendanceRecords = attendanceRecords.filter(
+        rec => rec.date.toISOString().split('T')[0] === todayStr
+      );
+      const attendancePercent = employees.length
+        ? Math.round((new Set(todayAttendanceRecords.map(r => r.employeeId)).size / employees.length) * 100)
+        : 0;
+      setTodayAttendance(attendancePercent);
+
+      // Leave
+      const leaveRecords = await getAllLeaveRecords();
+      const onLeave = leaveRecords.filter(
+        rec =>
+          rec.status === "Approved" &&
+          today >= rec.startDate &&
+          today <= rec.endDate
+      ).length;
+      setOnLeaveToday(onLeave);
+
       setDashboardData({
         totalEmployees: Array.isArray(employees) ? employees.length : 0,
         totalSalaries,
@@ -71,13 +95,27 @@ const Dashboard = () => {
 
   console.log('Rendering dashboard content');
 
-  const stats = [
+  const allStats = [
     { 
       title: 'Total Employees', 
       value: dashboardData.totalEmployees.toString(), 
       icon: 'users', 
       trend: '12% from last month', 
       trendUp: true 
+    },
+    { 
+      title: "Today's Attendance",
+      value: `${todayAttendance}%`,
+      icon: 'clipboard',
+      trend: '3% from yesterday',
+      trendUp: true
+    },
+    { 
+      title: 'On Leave Today',
+      value: onLeaveToday.toString(),
+      icon: 'calendar',
+      trend: '5% from last week',
+      trendUp: true
     },
     { 
       title: 'Total Payroll', 
@@ -87,6 +125,13 @@ const Dashboard = () => {
       trendUp: true 
     }
   ];
+
+  let stats = allStats;
+  if (userRole === 'HR') {
+    stats = allStats.filter(card => ["Total Employees", "Today's Attendance", "On Leave Today"].includes(card.title));
+  } else if (userRole === 'Finance') {
+    stats = allStats.filter(card => ["Total Employees", "Total Payroll"].includes(card.title));
+  }
 
   const calendarDates = Array.from({ length: 35 }, (_, i) => {
     const day = i - 29; // Start from previous month

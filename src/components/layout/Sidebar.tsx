@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,7 +20,7 @@ type SidebarProps = {
 
 export function Sidebar({ activePage }: SidebarProps) {
   const { signOut } = useAuth();
-  const { hasPermission } = useRole();
+  const { hasPermission, userRole } = useRole();
   const location = useLocation();
   const currentPath = location.pathname;
   
@@ -158,7 +157,7 @@ export function Sidebar({ activePage }: SidebarProps) {
         {/* SETTINGS SECTION */}
         <h3 className="text-xs font-semibold text-gray-400 mt-8 mb-4">SETTINGS</h3>
         <nav className="space-y-1">
-          {hasPermission('/roles-permissions') && (
+          {userRole === 'IT' && hasPermission('/roles-permissions') && (
             <Link 
               to="/roles-permissions" 
               className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
@@ -169,7 +168,6 @@ export function Sidebar({ activePage }: SidebarProps) {
               Roles & Permissions
             </Link>
           )}
-          
           <button 
             onClick={signOut}
             className="w-full flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md"

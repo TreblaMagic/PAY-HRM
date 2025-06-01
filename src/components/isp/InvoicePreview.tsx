@@ -502,14 +502,14 @@ export const InvoicePreview = ({ invoices, onClose }: InvoicePreviewProps) => {
             {invoices.map((invoice) => (
               <TabsContent key={invoice.id} value={invoice.id}>
                 <div id="invoice-content" ref={invoiceRef}>
-                  <InvoiceContent invoice={invoice} />
+                <InvoiceContent invoice={invoice} />
                 </div>
               </TabsContent>
             ))}
           </Tabs>
         ) : (
           <div id="invoice-content" ref={invoiceRef}>
-            <InvoiceContent invoice={invoices[0]} />
+          <InvoiceContent invoice={invoices[0]} />
           </div>
         )}
       </CardContent>
