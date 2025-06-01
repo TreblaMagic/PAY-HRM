@@ -1,64 +1,68 @@
-
-export type Equipment = {
+export interface Equipment {
   id: string;
   name: string;
   description: string;
   price: number;
-  imageUrl: string;
-  quantity: number;
-  inStock: number;
-};
+  stock: number;
+}
 
-export type InternetSpeed = {
+export interface InternetSpeed {
   id: string;
   mbps: number;
   price: number;
   description: string;
-};
+}
 
-export type SetupCost = {
-  id: string;
-  name: string;
-  price: number;
-};
-
-export type ManagedService = {
-  id: string;
-  name: string;
-  price: number;
-  description: string;
-};
-
-export type MarkupSettings = {
+export interface MarkupSettings {
   equipmentMarkup: number;
   mbpsMarkup: number;
   setupMarkup: number;
   managedServicesMarkup: number;
-};
+}
 
-export type InvoiceItem = {
+export interface SetupCost {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+}
+
+export interface ManagedService {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+}
+
+export interface InvoiceItem {
+  id: string;
   name: string;
   description: string;
   quantity: number;
   unitPrice: number;
-  total: number;
-};
+  amount: number;
+  type: 'equipment' | 'internet_speed' | 'setup_cost' | 'managed_service';
+}
 
-export type Invoice = {
+export interface Invoice {
   id: string;
+  customerId: string;
   customerName: string;
   customerEmail: string;
   customerPhone: string;
   customerAddress: string;
-  date: string;
-  dueDate: string;
   items: InvoiceItem[];
   subtotal: number;
   tax: number;
   total: number;
-  notes: string;
-  type: 'full' | 'original' | 'markup';
-};
+  status: 'pending' | 'paid' | 'cancelled';
+  createdAt: string;
+  updatedAt: string;
+  type: 'base' | 'markup' | 'full';
+  date: string;
+  dueDate: string;
+  notes?: string;
+}
 
 export type ServiceSetup = {
   equipment: { equipment: Equipment; quantity: number }[];

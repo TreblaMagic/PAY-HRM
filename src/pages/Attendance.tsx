@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { RecordAttendance } from "@/components/attendance/RecordAttendance";
@@ -24,6 +23,7 @@ export default function AttendancePage() {
     startDate: undefined,
     endDate: undefined,
   });
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -47,6 +47,7 @@ export default function AttendancePage() {
 
   const loadAttendanceRecords = async () => {
     try {
+      setIsLoading(true);
       const records = await getAllAttendance();
       setAttendanceRecords(records);
     } catch (error) {
@@ -56,13 +57,19 @@ export default function AttendancePage() {
         description: "Failed to load attendance records",
         variant: "destructive"
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleAddAttendance = async (record: AttendanceRecord) => {
+  const handleAddAttendance = async (record: Omit<AttendanceRecord, "id">) => {
     try {
-      await addAttendance(record);
-      setAttendanceRecords(prev => [...prev, record]);
+      const newRecord = await addAttendance(record);
+      setAttendanceRecords(prev => [...prev, newRecord]);
+      toast({
+        title: "Success",
+        description: "Attendance record added successfully"
+      });
     } catch (error) {
       console.error("Error adding attendance record:", error);
       toast({
@@ -76,7 +83,7 @@ export default function AttendancePage() {
   const handleDelete = async (id: string) => {
     try {
       await deleteAttendance(id);
-      setAttendanceRecords(attendanceRecords.filter(record => record.id !== id));
+      setAttendanceRecords(prev => prev.filter(record => record.id !== id));
       toast({
         title: "Success",
         description: "Attendance record deleted successfully"
@@ -91,40 +98,48 @@ export default function AttendancePage() {
     }
   };
 
-  const handleGenerateReport = async () => {
-    if (!dateRange.startDate || !dateRange.endDate) {
-      toast({
-        title: "Missing information",
-        description: "Please select a date range for the report",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      const records = await getAttendanceByDateRange(dateRange.startDate, dateRange.endDate);
-      
-      if (records.length === 0) {
+  const handleDateRangeChange = async (range: DateRange) => {
+    setDateRange(range);
+    if (range.startDate && range.endDate) {
+      try {
+        setIsLoading(true);
+        const records = await getAttendanceByDateRange(range.startDate, range.endDate);
+        setAttendanceRecords(records);
+      } catch (error) {
+        console.error("Error fetching attendance records by date range:", error);
         toast({
-          title: "No records found",
-          description: "No attendance records found for the selected date range",
+          title: "Error",
+          description: "Failed to fetch attendance records",
           variant: "destructive"
         });
-        return;
+      } finally {
+        setIsLoading(false);
       }
+    } else {
+      loadAttendanceRecords();
+    }
+  };
 
-      const result = generateAttendancePDF(records, dateRange, employees);
-      if (result) {
-        toast({
-          title: "Success",
-          description: "Attendance report generated successfully"
-        });
-      }
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+  };
+
+  const handleGenerateReport = async () => {
+    try {
+      const records = dateRange.startDate && dateRange.endDate
+        ? await getAttendanceByDateRange(dateRange.startDate, dateRange.endDate)
+        : attendanceRecords;
+
+      await generateAttendancePDF(records, employees);
+      toast({
+        title: "Success",
+        description: "Attendance report generated successfully"
+      });
     } catch (error) {
-      console.error("Error generating report:", error);
+      console.error("Error generating attendance report:", error);
       toast({
         title: "Error",
-        description: "Failed to generate report",
+        description: "Failed to generate attendance report",
         variant: "destructive"
       });
     }
@@ -132,24 +147,31 @@ export default function AttendancePage() {
 
   return (
     <DashboardLayout title="Attendance Management" activePage="attendance">
-      <div className="p-8">
-        <div className="grid grid-cols-1 gap-6">
+      <div className="p-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold">Attendance Management</h1>
+          <p className="text-muted-foreground">Record and manage employee attendance</p>
+        </div>
+
+        <div className="space-y-6">
           <RecordAttendance 
-            employees={employees} 
-            onAddAttendance={handleAddAttendance} 
+            employees={employees}
+            onAddAttendance={handleAddAttendance}
           />
-          
-          <AttendanceTable 
-            records={attendanceRecords}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            onDelete={handleDelete}
-          />
-          
-          <AttendanceReport 
-            dateRange={dateRange} 
-            setDateRange={setDateRange}
+
+          <AttendanceReport
+            dateRange={dateRange}
+            onDateRangeChange={handleDateRangeChange}
+            onSearch={handleSearch}
             onGenerateReport={handleGenerateReport}
+          />
+
+          <AttendanceTable
+            records={attendanceRecords}
+            employees={employees}
+            searchTerm={searchTerm}
+            onDelete={handleDelete}
+            isLoading={isLoading}
           />
         </div>
       </div>

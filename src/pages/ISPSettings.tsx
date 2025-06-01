@@ -1,284 +1,302 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { EquipmentManagement } from '@/components/isp/EquipmentManagement';
 import { InternetSpeedManagement } from '@/components/isp/InternetSpeedManagement';
-import { MarkupSettings } from '@/components/isp/MarkupSettings';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
-import { 
-  Equipment, 
-  InternetSpeed, 
-  MarkupSettings as MarkupSettingsType 
-} from '@/types/isp';
-import { 
+import { MarkupSettingsManagement } from '@/components/isp/MarkupSettingsManagement';
+import { SetupCostsManagement } from '@/components/isp/SetupCostsManagement';
+import { ManagedServicesManagement } from '@/components/isp/ManagedServicesManagement';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from 'sonner';
+import {
   getEquipment,
   getInternetSpeeds,
   getMarkupSettings,
+  getSetupCosts,
+  getManagedServices,
   updateEquipment,
   updateInternetSpeed,
-  updateMarkupSettings
-} from '@/services/isp';
-import { SetupCostManagement } from '@/components/isp/SetupCostManagement';
-import { ManagedServiceManagement } from '@/components/isp/ManagedServiceManagement';
-import {
-  getSetupCosts, addSetupCost, updateSetupCost, deleteSetupCost,
-  getManagedServices, addManagedService, updateManagedService, deleteManagedService
+  updateMarkupSettings,
+  addSetupCost,
+  updateSetupCost,
+  deleteSetupCost,
+  addManagedService,
+  updateManagedService,
+  deleteManagedService,
+  addEquipment,
+  addInternetSpeed
 } from '@/services/isp/settingsService';
-import { SetupCost, ManagedService } from '@/types/isp';
+import type { Equipment, InternetSpeed, MarkupSettings, SetupCost, ManagedService } from '@/types/isp';
 
 const ISPSettings = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
   const [equipment, setEquipment] = useState<Equipment[]>([]);
-  const [internetSpeeds, setInternetSpeeds] = useState<InternetSpeed[]>([]);
-  const [markupSettings, setMarkupSettings] = useState<MarkupSettingsType>({
-    equipmentMarkup: 0,
-    mbpsMarkup: 0,
-    setupMarkup: 0,
-    managedServicesMarkup: 0
+  const [speeds, setSpeeds] = useState<InternetSpeed[]>([]);
+  const [markupSettings, setMarkupSettings] = useState<MarkupSettings>({
+    equipmentMarkup: 25,
+    mbpsMarkup: 30,
+    setupMarkup: 20,
+    managedServicesMarkup: 35
   });
   const [setupCosts, setSetupCosts] = useState<SetupCost[]>([]);
   const [managedServices, setManagedServices] = useState<ManagedService[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-  const { toast } = useToast();
-  const navigate = useNavigate();
-  
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [equipData, speedsData, markupData, setupCostData, managedServiceData] = await Promise.all([
-          getEquipment(),
-          getInternetSpeeds(),
-          getMarkupSettings(),
-          getSetupCosts(),
-          getManagedServices()
-        ]);
-        
-        setEquipment(equipData);
-        setInternetSpeeds(speedsData);
-        setMarkupSettings(markupData);
-        setSetupCosts(setupCostData);
-        setManagedServices(managedServiceData);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load settings data. Please try again.",
-          variant: "destructive"
-        });
-        setLoading(false);
-      }
-    };
-    
-    fetchData();
-  }, [toast]);
-  
-  const handleAddEquipment = async (newEquipment: Omit<Equipment, "id">) => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    fetchAllSettings();
+  }, [user, navigate]);
+
+  const fetchAllSettings = async () => {
     try {
-      const updatedEquipment = await updateEquipment({
-        ...newEquipment,
-        id: ""
-      });
-      setEquipment(updatedEquipment);
-      toast({
-        title: "Success",
-        description: "Equipment added successfully",
-      });
+      setIsLoading(true);
+      const [equipmentData, speedsData, markupData, costsData, servicesData] = await Promise.all([
+        getEquipment(),
+        getInternetSpeeds(),
+        getMarkupSettings(),
+        getSetupCosts(),
+        getManagedServices()
+      ]);
+
+      setEquipment(equipmentData || []);
+      setSpeeds(speedsData || []);
+      setMarkupSettings(markupData || { equipmentMarkup: 25, mbpsMarkup: 30, setupMarkup: 20, managedServicesMarkup: 35 });
+      setSetupCosts(costsData || []);
+      setManagedServices(servicesData || []);
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+      toast.error('Failed to load settings');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddEquipment = async (equipment: Omit<Equipment, 'id'>) => {
+    try {
+      // Validate required fields
+      if (!equipment.name || !equipment.description || equipment.price === undefined || equipment.stock === undefined) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+
+      // Validate numeric fields
+      if (isNaN(equipment.price) || isNaN(equipment.stock) || equipment.price < 0 || equipment.stock < 0) {
+        toast.error('Price and stock must be valid numbers');
+        return;
+      }
+
+      await addEquipment(equipment);
+      await fetchAllSettings();
+      toast.success('Equipment added successfully');
     } catch (error) {
       console.error('Error adding equipment:', error);
-      toast({
-        title: "Error",
-        description: "Failed to add equipment. Please try again.",
-        variant: "destructive"
-      });
+      toast.error('Failed to add equipment');
     }
   };
-  
-  const handleUpdateEquipment = async (updatedEquipment: Equipment) => {
+
+  const handleUpdateEquipment = async (equipment: Equipment) => {
     try {
-      const result = await updateEquipment(updatedEquipment);
-      setEquipment(result);
-      toast({
-        title: "Success",
-        description: "Equipment updated successfully",
-      });
+      await updateEquipment([equipment]);
+      setEquipment((prev) => prev.map((item) => (item.id === equipment.id ? equipment : item)));
+      toast.success('Equipment updated successfully');
     } catch (error) {
       console.error('Error updating equipment:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update equipment. Please try again.",
-        variant: "destructive"
-      });
+      toast.error('Failed to update equipment');
     }
   };
-  
-  const handleAddSpeed = async (newSpeed: Omit<InternetSpeed, "id">) => {
+
+  const handleAddInternetSpeed = async (speed: Omit<InternetSpeed, 'id'>) => {
     try {
-      const updatedSpeeds = await updateInternetSpeed({
-        ...newSpeed,
-        id: ""
-      });
-      setInternetSpeeds(updatedSpeeds);
-      toast({
-        title: "Success",
-        description: "Internet speed package added successfully",
-      });
+      // Validate required fields
+      if (!speed.mbps || !speed.description || speed.price === undefined) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+
+      // Validate numeric fields
+      if (isNaN(speed.mbps) || isNaN(speed.price) || speed.mbps <= 0 || speed.price < 0) {
+        toast.error('Mbps and price must be valid numbers');
+        return;
+      }
+
+      await addInternetSpeed(speed);
+      await fetchAllSettings();
+      toast.success('Internet speed added successfully');
     } catch (error) {
       console.error('Error adding internet speed:', error);
-      toast({
-        title: "Error",
-        description: "Failed to add internet speed package. Please try again.",
-        variant: "destructive"
-      });
+      toast.error('Failed to add internet speed');
     }
   };
-  
-  const handleUpdateSpeed = async (updatedSpeed: InternetSpeed) => {
+
+  const handleUpdateInternetSpeed = async (speed: InternetSpeed) => {
     try {
-      const result = await updateInternetSpeed(updatedSpeed);
-      setInternetSpeeds(result);
-      toast({
-        title: "Success",
-        description: "Internet speed package updated successfully",
-      });
+      // Validate required fields
+      if (!speed.mbps || !speed.description || speed.price === undefined) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+
+      // Validate numeric fields
+      if (isNaN(speed.mbps) || isNaN(speed.price) || speed.mbps <= 0 || speed.price < 0) {
+        toast.error('Mbps and price must be valid numbers');
+        return;
+      }
+
+      await updateInternetSpeed([speed]);
+      setSpeeds((prev) => prev.map((item) => (item.id === speed.id ? speed : item)));
+      toast.success('Internet speed updated successfully');
     } catch (error) {
       console.error('Error updating internet speed:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update internet speed package. Please try again.",
-        variant: "destructive"
-      });
+      toast.error('Failed to update internet speed');
     }
   };
-  
-  const handleUpdateMarkupSettings = async (updatedSettings: MarkupSettingsType) => {
+
+  const handleUpdateMarkupSettings = async (settings: MarkupSettings) => {
     try {
-      const result = await updateMarkupSettings(updatedSettings);
-      setMarkupSettings(result);
-      toast({
-        title: "Success",
-        description: "Markup settings updated successfully",
-      });
+      await updateMarkupSettings(settings);
+      setMarkupSettings(settings);
+      toast.success('Markup settings updated successfully');
     } catch (error) {
       console.error('Error updating markup settings:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update markup settings. Please try again.",
-        variant: "destructive"
-      });
+      toast.error('Failed to update markup settings');
     }
   };
-  
+
   const handleAddSetupCost = async (cost: Omit<SetupCost, 'id'>) => {
-    await addSetupCost(cost);
-    setSetupCosts(await getSetupCosts());
-    toast({ title: "Success", description: "Setup cost added." });
+    try {
+      await addSetupCost(cost);
+      await fetchAllSettings();
+      toast.success('Setup cost added successfully');
+    } catch (error) {
+      console.error('Error adding setup cost:', error);
+      toast.error('Failed to add setup cost');
+    }
   };
-  
+
   const handleUpdateSetupCost = async (cost: SetupCost) => {
-    await updateSetupCost(cost);
-    setSetupCosts(await getSetupCosts());
-    toast({ title: "Success", description: "Setup cost updated." });
+    try {
+      await updateSetupCost(cost);
+      setSetupCosts((prev) => prev.map((item) => (item.id === cost.id ? cost : item)));
+      toast.success('Setup cost updated successfully');
+    } catch (error) {
+      console.error('Error updating setup cost:', error);
+      toast.error('Failed to update setup cost');
+    }
   };
-  
+
   const handleDeleteSetupCost = async (id: string) => {
-    await deleteSetupCost(id);
-    setSetupCosts(await getSetupCosts());
-    toast({ title: "Success", description: "Setup cost deleted." });
+    try {
+      await deleteSetupCost(id);
+      setSetupCosts((prev) => prev.filter((item) => item.id !== id));
+      toast.success('Setup cost deleted successfully');
+    } catch (error) {
+      console.error('Error deleting setup cost:', error);
+      toast.error('Failed to delete setup cost');
+    }
   };
-  
+
   const handleAddManagedService = async (service: Omit<ManagedService, 'id'>) => {
-    await addManagedService(service);
-    setManagedServices(await getManagedServices());
-    toast({ title: "Success", description: "Managed service added." });
+    try {
+      await addManagedService(service);
+      await fetchAllSettings();
+      toast.success('Managed service added successfully');
+    } catch (error) {
+      console.error('Error adding managed service:', error);
+      toast.error('Failed to add managed service');
+    }
   };
-  
+
   const handleUpdateManagedService = async (service: ManagedService) => {
-    await updateManagedService(service);
-    setManagedServices(await getManagedServices());
-    toast({ title: "Success", description: "Managed service updated." });
+    try {
+      await updateManagedService(service);
+      setManagedServices((prev) => prev.map((item) => (item.id === service.id ? service : item)));
+      toast.success('Managed service updated successfully');
+    } catch (error) {
+      console.error('Error updating managed service:', error);
+      toast.error('Failed to update managed service');
+    }
   };
-  
+
   const handleDeleteManagedService = async (id: string) => {
-    await deleteManagedService(id);
-    setManagedServices(await getManagedServices());
-    toast({ title: "Success", description: "Managed service deleted." });
+    try {
+      await deleteManagedService(id);
+      setManagedServices((prev) => prev.filter((item) => item.id !== id));
+      toast.success('Managed service deleted successfully');
+    } catch (error) {
+      console.error('Error deleting managed service:', error);
+      toast.error('Failed to delete managed service');
+    }
   };
-  
-  const goBack = () => {
-    navigate('/isp');
-  };
-  
-  if (loading) {
-    return (
-      <DashboardLayout title="ISP Settings" activePage="dashboard">
-        <div className="p-8 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      </DashboardLayout>
-    );
+
+  if (!user) {
+    return null;
   }
-  
+
   return (
-    <DashboardLayout title="ISP Settings" activePage="dashboard">
-      <div className="p-8">
-        <div className="flex items-center mb-6">
-          <Button variant="ghost" onClick={goBack} className="mr-4">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to ISP Services
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">ISP Settings</h1>
-            <p className="text-gray-500">Configure equipment, pricing, and markup settings</p>
-          </div>
-        </div>
-        
-        <div className="space-y-8">
-          <MarkupSettings 
-            markupSettings={markupSettings}
-            onUpdateMarkupSettings={handleUpdateMarkupSettings}
-          />
-          
-          <EquipmentManagement 
-            equipment={equipment}
-            onAddEquipment={handleAddEquipment}
-            onUpdateEquipment={handleUpdateEquipment}
-          />
-          
-          <InternetSpeedManagement 
-            speeds={internetSpeeds}
-            onAddSpeed={handleAddSpeed}
-            onUpdateSpeed={handleUpdateSpeed}
-          />
-          
-          <SetupCostManagement
-            setupCosts={setupCosts}
-            onAdd={handleAddSetupCost}
-            onUpdate={handleUpdateSetupCost}
-            onDelete={handleDeleteSetupCost}
-          />
-          
-          <ManagedServiceManagement
-            managedServices={managedServices}
-            onAdd={handleAddManagedService}
-            onUpdate={handleUpdateManagedService}
-            onDelete={handleDeleteManagedService}
-          />
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Additional Settings</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-500">
-                More configuration options will be available in future updates.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+    <DashboardLayout title="ISP Settings">
+      <div className="container mx-auto py-6">
+        <h1 className="text-3xl font-bold mb-6">ISP Settings</h1>
+        <Tabs defaultValue="equipment" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="equipment">Equipment</TabsTrigger>
+            <TabsTrigger value="speeds">Internet Speeds</TabsTrigger>
+            <TabsTrigger value="markup">Markup Settings</TabsTrigger>
+            <TabsTrigger value="setup">Setup Costs</TabsTrigger>
+            <TabsTrigger value="services">Managed Services</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="equipment">
+            <EquipmentManagement
+              equipment={equipment}
+              onAddEquipment={handleAddEquipment}
+              onUpdateEquipment={handleUpdateEquipment}
+              isLoading={isLoading}
+            />
+          </TabsContent>
+
+          <TabsContent value="speeds">
+            <InternetSpeedManagement
+              speeds={speeds}
+              onAddSpeed={handleAddInternetSpeed}
+              onUpdateSpeed={handleUpdateInternetSpeed}
+              isLoading={isLoading}
+            />
+          </TabsContent>
+
+          <TabsContent value="markup">
+            <MarkupSettingsManagement
+              settings={markupSettings}
+              onUpdateSettings={handleUpdateMarkupSettings}
+              isLoading={isLoading}
+            />
+          </TabsContent>
+
+          <TabsContent value="setup">
+            <SetupCostsManagement
+              costs={setupCosts}
+              onAddCost={handleAddSetupCost}
+              onUpdateCost={handleUpdateSetupCost}
+              onDeleteCost={handleDeleteSetupCost}
+              isLoading={isLoading}
+            />
+          </TabsContent>
+
+          <TabsContent value="services">
+            <ManagedServicesManagement
+              services={managedServices}
+              onAddService={handleAddManagedService}
+              onUpdateService={handleUpdateManagedService}
+              onDeleteService={handleDeleteManagedService}
+              isLoading={isLoading}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );

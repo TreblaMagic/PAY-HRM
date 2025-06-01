@@ -13,7 +13,8 @@ import {
   InternetSpeed, 
   SetupCost, 
   ManagedService, 
-  ServiceSetup 
+  ServiceSetup,
+  InvoiceItem
 } from '@/types/isp';
 import { 
   getEquipment, 
@@ -23,6 +24,7 @@ import {
   generateInvoice, 
   generateSeparateInvoices
 } from '@/services/isp';
+import { supabase } from '@/lib/supabaseClient';
 
 const ISP = () => {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
@@ -66,7 +68,71 @@ const ISP = () => {
   
   const handleGenerateInvoice = async (serviceSetup: ServiceSetup) => {
     try {
-      const invoice = await generateInvoice(serviceSetup);
+      // First create a customer record
+      const { data: customerData, error: customerError } = await supabase
+        .from('customers')
+        .insert({
+          name: serviceSetup.customerName,
+          email: serviceSetup.customerEmail,
+          phone: serviceSetup.customerPhone,
+          address: serviceSetup.customerAddress
+        })
+        .select()
+        .single();
+
+      if (customerError) {
+        console.error('Error creating customer:', customerError);
+        throw customerError;
+      }
+
+      // Format items for invoice
+      const items: InvoiceItem[] = [
+        // Add equipment items
+        ...serviceSetup.equipment.map(eq => ({
+          id: eq.equipment.id,
+          name: eq.equipment.name,
+          description: eq.equipment.description,
+          quantity: eq.quantity,
+          unitPrice: eq.equipment.price,
+          amount: eq.equipment.price * eq.quantity,
+          type: 'equipment' as const
+        })),
+        // Add internet speed
+        {
+          id: serviceSetup.internetSpeed.id,
+          name: `${serviceSetup.internetSpeed.mbps} Mbps`,
+          description: serviceSetup.internetSpeed.description,
+          quantity: 1,
+          unitPrice: serviceSetup.internetSpeed.price,
+          amount: serviceSetup.internetSpeed.price,
+          type: 'internet_speed' as const
+        },
+        // Add setup cost
+        {
+          id: serviceSetup.setupCost.id,
+          name: serviceSetup.setupCost.name,
+          description: serviceSetup.setupCost.description,
+          quantity: 1,
+          unitPrice: serviceSetup.setupCost.price,
+          amount: serviceSetup.setupCost.price,
+          type: 'setup_cost' as const
+        }
+      ];
+
+      // Add managed service if selected
+      if (serviceSetup.managedService) {
+        items.push({
+          id: serviceSetup.managedService.id,
+          name: serviceSetup.managedService.name,
+          description: serviceSetup.managedService.description,
+          quantity: 1,
+          unitPrice: serviceSetup.managedService.price,
+          amount: serviceSetup.managedService.price,
+          type: 'managed_service' as const
+        });
+      }
+
+      const invoice = await generateInvoice(customerData, items);
       setInvoices([invoice]);
       toast({
         title: "Success",
@@ -84,8 +150,72 @@ const ISP = () => {
   
   const handleGenerateSeparateInvoices = async (serviceSetup: ServiceSetup) => {
     try {
-      const generatedInvoices = await generateSeparateInvoices(serviceSetup);
-      setInvoices(generatedInvoices);
+      // First create a customer record
+      const { data: customerData, error: customerError } = await supabase
+        .from('customers')
+        .insert({
+          name: serviceSetup.customerName,
+          email: serviceSetup.customerEmail,
+          phone: serviceSetup.customerPhone,
+          address: serviceSetup.customerAddress
+        })
+        .select()
+        .single();
+
+      if (customerError) {
+        console.error('Error creating customer:', customerError);
+        throw customerError;
+      }
+
+      // Format items for invoice
+      const items: InvoiceItem[] = [
+        // Add equipment items
+        ...serviceSetup.equipment.map(eq => ({
+          id: eq.equipment.id,
+          name: eq.equipment.name,
+          description: eq.equipment.description,
+          quantity: eq.quantity,
+          unitPrice: eq.equipment.price,
+          amount: eq.equipment.price * eq.quantity,
+          type: 'equipment' as const
+        })),
+        // Add internet speed
+        {
+          id: serviceSetup.internetSpeed.id,
+          name: `${serviceSetup.internetSpeed.mbps} Mbps`,
+          description: serviceSetup.internetSpeed.description,
+          quantity: 1,
+          unitPrice: serviceSetup.internetSpeed.price,
+          amount: serviceSetup.internetSpeed.price,
+          type: 'internet_speed' as const
+        },
+        // Add setup cost
+        {
+          id: serviceSetup.setupCost.id,
+          name: serviceSetup.setupCost.name,
+          description: serviceSetup.setupCost.description,
+          quantity: 1,
+          unitPrice: serviceSetup.setupCost.price,
+          amount: serviceSetup.setupCost.price,
+          type: 'setup_cost' as const
+        }
+      ];
+
+      // Add managed service if selected
+      if (serviceSetup.managedService) {
+        items.push({
+          id: serviceSetup.managedService.id,
+          name: serviceSetup.managedService.name,
+          description: serviceSetup.managedService.description,
+          quantity: 1,
+          unitPrice: serviceSetup.managedService.price,
+          amount: serviceSetup.managedService.price,
+          type: 'managed_service' as const
+        });
+      }
+
+      const generatedInvoices = await generateSeparateInvoices(customerData, items);
+      setInvoices([generatedInvoices.baseInvoice, generatedInvoices.markupInvoice]);
       toast({
         title: "Success",
         description: "Separate invoices generated successfully",

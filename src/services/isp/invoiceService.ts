@@ -1,227 +1,281 @@
-
 import { Invoice, InvoiceItem, ServiceSetup } from '@/types/isp';
 import { markupSettings } from './mockData';
 import { generateId, formatDate } from './utils';
+import { supabase } from '@/lib/supabaseClient';
+import { Equipment, InternetSpeed, MarkupSettings, SetupCost, ManagedService } from '@/types/isp';
 
-export const generateInvoice = (serviceSetup: ServiceSetup): Promise<Invoice> => {
-  const today = new Date();
-  const dueDate = new Date();
-  dueDate.setDate(today.getDate() + 30);
-  
-  const items: InvoiceItem[] = [];
-  let subtotal = 0;
-  
-  // Add equipment
-  serviceSetup.equipment.forEach(item => {
-    const totalPrice = item.equipment.price * item.quantity;
-    items.push({
-      name: item.equipment.name,
-      description: item.equipment.description,
-      quantity: item.quantity,
-      unitPrice: item.equipment.price,
-      total: totalPrice
+interface CustomerData {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  address: string | null;
+}
+
+export const generateInvoice = async (customerData: CustomerData, items: InvoiceItem[]): Promise<Invoice> => {
+  try {
+    // Get markup settings
+    const { data: settingsData, error: settingsError } = await supabase
+      .from('isp_settings')
+      .select('markup_settings')
+      .order('id', { ascending: true })
+      .limit(1);
+
+    if (settingsError) {
+      console.error('Error fetching markup settings:', settingsError);
+      throw settingsError;
+    }
+
+    if (!settingsData || settingsData.length === 0) {
+      throw new Error('No markup settings found');
+    }
+
+    const markupSettings = (settingsData[0].markup_settings as unknown) as MarkupSettings;
+
+    // Calculate prices with markup
+    const itemsWithMarkup = items.map(item => {
+      let originalPrice = item.unitPrice;
+      let markupAmount = 0;
+
+      switch (item.type) {
+        case 'equipment':
+          markupAmount = originalPrice * (markupSettings.equipmentMarkup / 100);
+          break;
+        case 'internet_speed':
+          markupAmount = originalPrice * (markupSettings.mbpsMarkup / 100);
+          break;
+        case 'setup_cost':
+          markupAmount = originalPrice * (markupSettings.setupMarkup / 100);
+          break;
+        case 'managed_service':
+          markupAmount = originalPrice * (markupSettings.managedServicesMarkup / 100);
+          break;
+      }
+
+      return {
+        ...item,
+        unitPrice: originalPrice + markupAmount,
+        amount: (originalPrice + markupAmount) * item.quantity
+      };
     });
-    subtotal += totalPrice;
-  });
-  
-  // Add internet speed
-  items.push({
-    name: `${serviceSetup.internetSpeed.mbps} Mbps Internet`,
-    description: serviceSetup.internetSpeed.description,
-    quantity: 1,
-    unitPrice: serviceSetup.internetSpeed.price,
-    total: serviceSetup.internetSpeed.price
-  });
-  subtotal += serviceSetup.internetSpeed.price;
-  
-  // Add setup cost
-  items.push({
-    name: serviceSetup.setupCost.name,
-    description: 'One-time installation and setup fee',
-    quantity: 1,
-    unitPrice: serviceSetup.setupCost.price,
-    total: serviceSetup.setupCost.price
-  });
-  subtotal += serviceSetup.setupCost.price;
-  
-  // Add managed service if selected
-  if (serviceSetup.managedService) {
-    items.push({
-      name: serviceSetup.managedService.name,
-      description: serviceSetup.managedService.description,
-      quantity: 1,
-      unitPrice: serviceSetup.managedService.price,
-      total: serviceSetup.managedService.price
-    });
-    subtotal += serviceSetup.managedService.price;
+
+    // Calculate totals
+    const subtotal = itemsWithMarkup.reduce((sum, item) => sum + item.amount, 0);
+    const tax = subtotal * 0.05; // 5% tax
+    const total = subtotal + tax;
+
+    // Create invoice
+    const invoice: Invoice = {
+      id: crypto.randomUUID(),
+      customerId: customerData.id,
+      customerName: customerData.name,
+      customerEmail: customerData.email,
+      customerPhone: customerData.phone || '',
+      customerAddress: customerData.address || '',
+      items: itemsWithMarkup,
+      subtotal,
+      tax,
+      total,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      type: 'full',
+      date: new Date().toISOString(),
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+      notes: 'Thank you for your business!'
+    };
+
+    // Save to database
+    const { error: insertError } = await supabase
+      .from('invoices')
+      .insert({
+        id: invoice.id,
+        customer_id: invoice.customerId,
+        customer_name: invoice.customerName,
+        customer_email: invoice.customerEmail,
+        customer_phone: invoice.customerPhone,
+        customer_address: invoice.customerAddress,
+        items: invoice.items,
+        subtotal: invoice.subtotal,
+        tax: invoice.tax,
+        total: invoice.total,
+        status: invoice.status,
+        type: invoice.type,
+        created_at: invoice.createdAt,
+        updated_at: invoice.updatedAt,
+        date: invoice.date,
+        due_date: invoice.dueDate,
+        notes: invoice.notes
+      });
+
+    if (insertError) {
+      console.error('Error creating invoice:', insertError);
+      throw insertError;
+    }
+
+    return invoice;
+  } catch (error) {
+    console.error('Error generating invoice:', error);
+    throw error;
   }
-  
-  // Calculate tax (assuming 10%)
-  const tax = subtotal * 0.10;
-  const total = subtotal + tax;
-  
-  const invoice: Invoice = {
-    id: generateId(),
-    customerName: serviceSetup.customerName,
-    customerEmail: serviceSetup.customerEmail,
-    customerPhone: serviceSetup.customerPhone,
-    customerAddress: serviceSetup.customerAddress,
-    date: formatDate(today),
-    dueDate: formatDate(dueDate),
-    items,
-    subtotal,
-    tax,
-    total,
-    notes: 'Thank you for your business!',
-    type: 'full'
-  };
-  
-  return Promise.resolve(invoice);
 };
 
-export const generateSeparateInvoices = (serviceSetup: ServiceSetup): Promise<Invoice[]> => {
-  const today = new Date();
-  const dueDate = new Date();
-  dueDate.setDate(today.getDate() + 30);
-  
-  // Original cost invoice
-  const originalItems: InvoiceItem[] = [];
-  let originalSubtotal = 0;
-  
-  // Markup invoice
-  const markupItems: InvoiceItem[] = [];
-  let markupSubtotal = 0;
-  
-  // Add equipment
-  serviceSetup.equipment.forEach(item => {
-    const originalPrice = item.equipment.price;
-    const markupPrice = originalPrice * (markupSettings.equipmentMarkup / 100);
-    
-    originalItems.push({
-      name: item.equipment.name,
-      description: item.equipment.description,
-      quantity: item.quantity,
-      unitPrice: originalPrice,
-      total: originalPrice * item.quantity
+export const generateSeparateInvoices = async (customerData: CustomerData, items: InvoiceItem[]): Promise<{ baseInvoice: Invoice; markupInvoice: Invoice }> => {
+  try {
+    // Get markup settings
+    const { data: settingsData, error: settingsError } = await supabase
+      .from('isp_settings')
+      .select('markup_settings')
+      .order('id', { ascending: true })
+      .limit(1);
+
+    if (settingsError) {
+      console.error('Error fetching markup settings:', settingsError);
+      throw settingsError;
+    }
+
+    if (!settingsData || settingsData.length === 0) {
+      throw new Error('No markup settings found');
+    }
+
+    const markupSettings = (settingsData[0].markup_settings as unknown) as MarkupSettings;
+
+    // Calculate base prices and markup amounts
+    const baseItems = items.map(item => ({
+      ...item,
+      unitPrice: item.unitPrice,
+      amount: item.unitPrice * item.quantity
+    }));
+
+    const markupItems = items.map(item => {
+      let markupAmount = 0;
+
+      switch (item.type) {
+        case 'equipment':
+          markupAmount = item.unitPrice * (markupSettings.equipmentMarkup / 100);
+          break;
+        case 'internet_speed':
+          markupAmount = item.unitPrice * (markupSettings.mbpsMarkup / 100);
+          break;
+        case 'setup_cost':
+          markupAmount = item.unitPrice * (markupSettings.setupMarkup / 100);
+          break;
+        case 'managed_service':
+          markupAmount = item.unitPrice * (markupSettings.managedServicesMarkup / 100);
+          break;
+      }
+
+      return {
+        ...item,
+        unitPrice: markupAmount,
+        amount: markupAmount * item.quantity
+      };
     });
-    originalSubtotal += originalPrice * item.quantity;
-    
-    markupItems.push({
-      name: item.equipment.name,
-      description: `Markup for ${item.equipment.name}`,
-      quantity: item.quantity,
-      unitPrice: markupPrice,
-      total: markupPrice * item.quantity
-    });
-    markupSubtotal += markupPrice * item.quantity;
-  });
-  
-  // Add internet speed
-  const originalSpeedPrice = serviceSetup.internetSpeed.price;
-  const markupSpeedPrice = originalSpeedPrice * (markupSettings.mbpsMarkup / 100);
-  
-  originalItems.push({
-    name: `${serviceSetup.internetSpeed.mbps} Mbps Internet`,
-    description: serviceSetup.internetSpeed.description,
-    quantity: 1,
-    unitPrice: originalSpeedPrice,
-    total: originalSpeedPrice
-  });
-  originalSubtotal += originalSpeedPrice;
-  
-  markupItems.push({
-    name: `${serviceSetup.internetSpeed.mbps} Mbps Internet Markup`,
-    description: `Markup for internet service`,
-    quantity: 1,
-    unitPrice: markupSpeedPrice,
-    total: markupSpeedPrice
-  });
-  markupSubtotal += markupSpeedPrice;
-  
-  // Add setup cost
-  const originalSetupPrice = serviceSetup.setupCost.price;
-  const markupSetupPrice = originalSetupPrice * (markupSettings.setupMarkup / 100);
-  
-  originalItems.push({
-    name: serviceSetup.setupCost.name,
-    description: 'One-time installation and setup fee',
-    quantity: 1,
-    unitPrice: originalSetupPrice,
-    total: originalSetupPrice
-  });
-  originalSubtotal += originalSetupPrice;
-  
-  markupItems.push({
-    name: `${serviceSetup.setupCost.name} Markup`,
-    description: 'Markup for installation and setup',
-    quantity: 1,
-    unitPrice: markupSetupPrice,
-    total: markupSetupPrice
-  });
-  markupSubtotal += markupSetupPrice;
-  
-  // Add managed service if selected
-  if (serviceSetup.managedService) {
-    const originalManagedPrice = serviceSetup.managedService.price;
-    const markupManagedPrice = originalManagedPrice * (markupSettings.managedServicesMarkup / 100);
-    
-    originalItems.push({
-      name: serviceSetup.managedService.name,
-      description: serviceSetup.managedService.description,
-      quantity: 1,
-      unitPrice: originalManagedPrice,
-      total: originalManagedPrice
-    });
-    originalSubtotal += originalManagedPrice;
-    
-    markupItems.push({
-      name: `${serviceSetup.managedService.name} Markup`,
-      description: `Markup for managed service`,
-      quantity: 1,
-      unitPrice: markupManagedPrice,
-      total: markupManagedPrice
-    });
-    markupSubtotal += markupManagedPrice;
+
+    // Calculate totals for base invoice
+    const baseSubtotal = baseItems.reduce((sum, item) => sum + item.amount, 0);
+    const baseTax = baseSubtotal * 0.05; // 5% tax
+    const baseTotal = baseSubtotal + baseTax;
+
+    // Calculate totals for markup invoice
+    const markupSubtotal = markupItems.reduce((sum, item) => sum + item.amount, 0);
+    const markupTax = markupSubtotal * 0.05; // 5% tax
+    const markupTotal = markupSubtotal + markupTax;
+
+    // Create base invoice
+    const baseInvoice: Invoice = {
+      id: crypto.randomUUID(),
+      customerId: customerData.id,
+      customerName: customerData.name,
+      customerEmail: customerData.email,
+      customerPhone: customerData.phone || '',
+      customerAddress: customerData.address || '',
+      items: baseItems,
+      subtotal: baseSubtotal,
+      tax: baseTax,
+      total: baseTotal,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      type: 'base',
+      date: new Date().toISOString(),
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+      notes: 'Base costs invoice'
+    };
+
+    // Create markup invoice
+    const markupInvoice: Invoice = {
+      id: crypto.randomUUID(),
+      customerId: customerData.id,
+      customerName: customerData.name,
+      customerEmail: customerData.email,
+      customerPhone: customerData.phone || '',
+      customerAddress: customerData.address || '',
+      items: markupItems,
+      subtotal: markupSubtotal,
+      tax: markupTax,
+      total: markupTotal,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      type: 'markup',
+      date: new Date().toISOString(),
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+      notes: 'Markup costs invoice'
+    };
+
+    // Save to database
+    const { error: insertError } = await supabase
+      .from('invoices')
+      .insert([
+        {
+          id: baseInvoice.id,
+          customer_id: baseInvoice.customerId,
+          customer_name: baseInvoice.customerName,
+          customer_email: baseInvoice.customerEmail,
+          customer_phone: baseInvoice.customerPhone,
+          customer_address: baseInvoice.customerAddress,
+          items: baseInvoice.items,
+          subtotal: baseInvoice.subtotal,
+          tax: baseInvoice.tax,
+          total: baseInvoice.total,
+          status: baseInvoice.status,
+          type: baseInvoice.type,
+          created_at: baseInvoice.createdAt,
+          updated_at: baseInvoice.updatedAt,
+          date: baseInvoice.date,
+          due_date: baseInvoice.dueDate,
+          notes: baseInvoice.notes
+        },
+        {
+          id: markupInvoice.id,
+          customer_id: markupInvoice.customerId,
+          customer_name: markupInvoice.customerName,
+          customer_email: markupInvoice.customerEmail,
+          customer_phone: markupInvoice.customerPhone,
+          customer_address: markupInvoice.customerAddress,
+          items: markupInvoice.items,
+          subtotal: markupInvoice.subtotal,
+          tax: markupInvoice.tax,
+          total: markupInvoice.total,
+          status: markupInvoice.status,
+          type: markupInvoice.type,
+          created_at: markupInvoice.createdAt,
+          updated_at: markupInvoice.updatedAt,
+          date: markupInvoice.date,
+          due_date: markupInvoice.dueDate,
+          notes: markupInvoice.notes
+        }
+      ]);
+
+    if (insertError) {
+      console.error('Error creating separate invoices:', insertError);
+      throw insertError;
+    }
+
+    return { baseInvoice, markupInvoice };
+  } catch (error) {
+    console.error('Error generating separate invoices:', error);
+    throw error;
   }
-  
-  // Calculate taxes
-  const originalTax = originalSubtotal * 0.10;
-  const originalTotal = originalSubtotal + originalTax;
-  
-  const markupTax = markupSubtotal * 0.10;
-  const markupTotal = markupSubtotal + markupTax;
-  
-  const originalInvoice: Invoice = {
-    id: generateId(),
-    customerName: serviceSetup.customerName,
-    customerEmail: serviceSetup.customerEmail,
-    customerPhone: serviceSetup.customerPhone,
-    customerAddress: serviceSetup.customerAddress,
-    date: formatDate(today),
-    dueDate: formatDate(dueDate),
-    items: originalItems,
-    subtotal: originalSubtotal,
-    tax: originalTax,
-    total: originalTotal,
-    notes: 'Original costs invoice',
-    type: 'original'
-  };
-  
-  const markupInvoice: Invoice = {
-    id: generateId(),
-    customerName: serviceSetup.customerName,
-    customerEmail: serviceSetup.customerEmail,
-    customerPhone: serviceSetup.customerPhone,
-    customerAddress: serviceSetup.customerAddress,
-    date: formatDate(today),
-    dueDate: formatDate(dueDate),
-    items: markupItems,
-    subtotal: markupSubtotal,
-    tax: markupTax,
-    total: markupTotal,
-    notes: 'Markup invoice',
-    type: 'markup'
-  };
-  
-  return Promise.resolve([originalInvoice, markupInvoice]);
 };

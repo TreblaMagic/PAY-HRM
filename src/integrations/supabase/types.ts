@@ -33,6 +33,155 @@ export type Database = {
         }
         Relationships: []
       }
+      attendance: {
+        Row: {
+          id: string
+          employee_id: string
+          date: string
+          status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          employee_id: string
+          date: string
+          status: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          employee_id?: string
+          date?: string
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_employee_id_fkey"
+            columns: ["employee_id"]
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      leave_records: {
+        Row: {
+          id: string
+          employee_id: string
+          start_date: string
+          end_date: string
+          days_used: number
+          reason: string
+          status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          employee_id: string
+          start_date: string
+          end_date: string
+          days_used: number
+          reason: string
+          status: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          employee_id?: string
+          start_date?: string
+          end_date?: string
+          days_used?: number
+          reason?: string
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_records_employee_id_fkey"
+            columns: ["employee_id"]
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      isp_settings: {
+        Row: {
+          id: string
+          equipment: Json
+          internet_speeds: Json
+          markup_settings: Json
+          setup_costs: Json
+          managed_services: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          equipment: Json
+          internet_speeds: Json
+          markup_settings: Json
+          setup_costs: Json
+          managed_services: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          equipment?: Json
+          internet_speeds?: Json
+          markup_settings?: Json
+          setup_costs?: Json
+          managed_services?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      employees: {
+        Row: {
+          id: string
+          name: string
+          email: string
+          position: string
+          department: string
+          hire_date: string
+          salary: number
+          leave_days_allocated: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          email: string
+          position: string
+          department: string
+          hire_date: string
+          salary: number
+          leave_days_allocated: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          email?: string
+          position?: string
+          department?: string
+          hire_date?: string
+          salary?: number
+          leave_days_allocated?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

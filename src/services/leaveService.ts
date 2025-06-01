@@ -1,6 +1,7 @@
-import { LeaveRecord, EmployeeLeaveBalance } from "@/types/leave";
+import { LeaveRecord, EmployeeLeaveBalance, LeaveStatus } from "@/types/leave";
 import { Employee } from "@/types/employee";
 import { getAllEmployees } from "./employeeService";
+import { supabase } from "@/lib/supabaseClient";
 
 // Storage keys
 const LEAVE_RECORDS_KEY = "leave_records";
@@ -17,7 +18,7 @@ const initializeLeaveRecords = (): void => {
         endDate: new Date("2024-05-05"),
         daysUsed: 5,
         reason: "Family vacation",
-        status: "Approved",
+        status: "Approved" as LeaveStatus,
         createdAt: new Date("2024-04-15")
       },
       {
@@ -27,7 +28,7 @@ const initializeLeaveRecords = (): void => {
         endDate: new Date("2024-04-12"),
         daysUsed: 3,
         reason: "Personal matters",
-        status: "Approved",
+        status: "Approved" as LeaveStatus,
         createdAt: new Date("2024-04-01")
       },
       {
@@ -37,7 +38,7 @@ const initializeLeaveRecords = (): void => {
         endDate: new Date("2024-06-25"),
         daysUsed: 6,
         reason: "Summer break",
-        status: "Pending",
+        status: "Pending" as LeaveStatus,
         createdAt: new Date("2024-05-30")
       }
     ];
@@ -46,77 +47,199 @@ const initializeLeaveRecords = (): void => {
 };
 
 // Get all leave records
-export const getAllLeaveRecords = (): LeaveRecord[] => {
-  initializeLeaveRecords();
-  const leaveRecords = localStorage.getItem(LEAVE_RECORDS_KEY);
-  return leaveRecords ? JSON.parse(leaveRecords).map((record: any) => ({
-    ...record,
-    startDate: new Date(record.startDate),
-    endDate: new Date(record.endDate),
-    createdAt: new Date(record.createdAt)
-  })) : [];
+export const getAllLeaveRecords = async (): Promise<LeaveRecord[]> => {
+  const { data, error } = await supabase
+    .from('leave_records')
+    .select(`
+      id,
+      employee_id,
+      start_date,
+      end_date,
+      days_used,
+      reason,
+      status,
+      created_at,
+      employees (
+        name
+      )
+    `)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching leave records:', error);
+    throw error;
+  }
+
+  return data.map(record => ({
+    id: record.id,
+    employeeId: record.employee_id,
+    startDate: new Date(record.start_date),
+    endDate: new Date(record.end_date),
+    daysUsed: record.days_used,
+    reason: record.reason,
+    status: record.status as LeaveStatus,
+    createdAt: new Date(record.created_at)
+  }));
 };
 
 // Get leave records for a specific employee
-export const getEmployeeLeaveRecords = (employeeId: string): LeaveRecord[] => {
-  const allRecords = getAllLeaveRecords();
-  return allRecords.filter(record => record.employeeId === employeeId);
+export const getEmployeeLeaveRecords = async (employeeId: string): Promise<LeaveRecord[]> => {
+  const { data, error } = await supabase
+    .from('leave_records')
+    .select(`
+      id,
+      employee_id,
+      start_date,
+      end_date,
+      days_used,
+      reason,
+      status,
+      created_at
+    `)
+    .eq('employee_id', employeeId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching employee leave records:', error);
+    throw error;
+  }
+
+  return data.map(record => ({
+    id: record.id,
+    employeeId: record.employee_id,
+    startDate: new Date(record.start_date),
+    endDate: new Date(record.end_date),
+    daysUsed: record.days_used,
+    reason: record.reason,
+    status: record.status as LeaveStatus,
+    createdAt: new Date(record.created_at)
+  }));
 };
 
 // Calculate leave balance for each employee
-export const calculateEmployeeLeaveBalances = (employees: Employee[]): EmployeeLeaveBalance[] => {
-  if (!Array.isArray(employees)) return [];
-  const allLeaveRecords = getAllLeaveRecords();
+export const calculateEmployeeLeaveBalances = async (): Promise<EmployeeLeaveBalance[]> => {
+  const { data: employees, error: employeesError } = await supabase
+    .from('employees')
+    .select('id, name, leave_days_allocated');
+
+  if (employeesError) {
+    console.error('Error fetching employees:', employeesError);
+    throw employeesError;
+  }
+
+  const { data: leaveRecords, error: leaveError } = await supabase
+    .from('leave_records')
+    .select('employee_id, days_used, status')
+    .eq('status', 'Approved');
+
+  if (leaveError) {
+    console.error('Error fetching leave records:', leaveError);
+    throw leaveError;
+  }
+
   return employees.map(employee => {
-    const totalDays = typeof employee.leaveDaysAllocated === 'number' ? employee.leaveDaysAllocated : 15;
-    const employeeLeaves = allLeaveRecords.filter(
-      record => record.employeeId === employee.id && record.status === "Approved"
-    );
-    const usedDays = employeeLeaves.reduce((total, record) => total + record.daysUsed, 0);
-    const remainingDays = totalDays - usedDays;
+    const usedDays = leaveRecords
+      .filter(record => record.employee_id === employee.id)
+      .reduce((total, record) => total + record.days_used, 0);
+
     return {
       employeeId: employee.id,
       employeeName: employee.name,
-      totalDays,
+      totalDays: employee.leave_days_allocated || 0,
       usedDays,
-      remainingDays
+      remainingDays: (employee.leave_days_allocated || 0) - usedDays
     };
   });
 };
 
 // Add new leave record
-export const addLeaveRecord = (leaveRecord: Omit<LeaveRecord, "id" | "createdAt">): LeaveRecord => {
-  const leaveRecords = getAllLeaveRecords();
-  
-  const newRecord: LeaveRecord = {
-    ...leaveRecord,
-    id: Date.now().toString(),
-    createdAt: new Date()
+export const addLeaveRecord = async (record: Omit<LeaveRecord, "id" | "createdAt">): Promise<LeaveRecord> => {
+  const { data, error } = await supabase
+    .from('leave_records')
+    .insert([{
+      employee_id: record.employeeId,
+      start_date: record.startDate.toISOString().split('T')[0],
+      end_date: record.endDate.toISOString().split('T')[0],
+      days_used: record.daysUsed,
+      reason: record.reason,
+      status: record.status
+    }])
+    .select(`
+      id,
+      employee_id,
+      start_date,
+      end_date,
+      days_used,
+      reason,
+      status,
+      created_at,
+      employees (
+        name
+      )
+    `)
+    .single();
+
+  if (error) {
+    console.error('Error adding leave record:', error);
+    throw error;
+  }
+
+  return {
+    id: data.id,
+    employeeId: data.employee_id,
+    startDate: new Date(data.start_date),
+    endDate: new Date(data.end_date),
+    daysUsed: data.days_used,
+    reason: data.reason,
+    status: data.status as LeaveStatus,
+    createdAt: new Date(data.created_at)
   };
-  
-  localStorage.setItem(LEAVE_RECORDS_KEY, JSON.stringify([...leaveRecords, newRecord]));
-  return newRecord;
 };
 
 // Update leave record
-export const updateLeaveRecord = (leaveRecord: LeaveRecord): LeaveRecord | null => {
-  const leaveRecords = getAllLeaveRecords();
-  const index = leaveRecords.findIndex(record => record.id === leaveRecord.id);
-  
-  if (index === -1) return null;
-  
-  leaveRecords[index] = leaveRecord;
-  localStorage.setItem(LEAVE_RECORDS_KEY, JSON.stringify(leaveRecords));
-  return leaveRecord;
+export const updateLeaveRecord = async (leaveRecord: LeaveRecord): Promise<LeaveRecord | null> => {
+  const { data, error } = await supabase
+    .from('leave_records')
+    .update({
+      employee_id: leaveRecord.employeeId,
+      start_date: leaveRecord.startDate.toISOString().split('T')[0],
+      end_date: leaveRecord.endDate.toISOString().split('T')[0],
+      days_used: leaveRecord.daysUsed,
+      reason: leaveRecord.reason,
+      status: leaveRecord.status
+    })
+    .eq('id', leaveRecord.id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating leave record:', error);
+    throw error;
+  }
+
+  if (!data) return null;
+
+  return {
+    id: data.id,
+    employeeId: data.employee_id,
+    startDate: new Date(data.start_date),
+    endDate: new Date(data.end_date),
+    daysUsed: data.days_used,
+    reason: data.reason,
+    status: data.status as LeaveStatus,
+    createdAt: new Date(data.created_at)
+  };
 };
 
 // Delete leave record
-export const deleteLeaveRecord = (id: string): boolean => {
-  const leaveRecords = getAllLeaveRecords();
-  const filteredRecords = leaveRecords.filter(record => record.id !== id);
-  
-  if (filteredRecords.length === leaveRecords.length) return false;
-  
-  localStorage.setItem(LEAVE_RECORDS_KEY, JSON.stringify(filteredRecords));
-  return true;
+export const deleteLeaveRecord = async (id: string): Promise<void> => {
+  const { error } = await supabase
+    .from('leave_records')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error deleting leave record:', error);
+    throw error;
+  }
 };

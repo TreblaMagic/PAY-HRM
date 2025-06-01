@@ -27,6 +27,7 @@ export default function LeaveManagement() {
   const [isUpdateFormOpen, setIsUpdateFormOpen] = useState(false);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | undefined>(undefined);
   const [activeTab, setActiveTab] = useState("overview");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetchEmployeesAndData();
@@ -38,14 +39,29 @@ export default function LeaveManagement() {
       const data = await getAllEmployees();
       const employeesArray = Array.isArray(data) ? data : [];
       setEmployees(employeesArray);
-      setLeaveBalances(calculateEmployeeLeaveBalances(employeesArray));
-      setLeaveRecords(getAllLeaveRecords());
+      
+      const balances = await calculateEmployeeLeaveBalances();
+      if (balances) {
+        setLeaveBalances(balances);
+      }
+      
+      const records = await getAllLeaveRecords();
+      if (records) {
+        setLeaveRecords(records);
+      }
     } catch (e) {
+      console.error('Error fetching data:', e);
+      toast({
+        title: "Error",
+        description: "Failed to load data",
+        variant: "destructive"
+      });
       setEmployees([]);
       setLeaveBalances([]);
       setLeaveRecords([]);
     } finally {
       setIsLoadingEmployees(false);
+      setIsLoading(false);
     }
   };
 
@@ -62,60 +78,80 @@ export default function LeaveManagement() {
     try {
       const employee = employees.find(emp => emp.id === employeeId);
       if (!employee) return;
+      
       await updateEmployee({ ...employee, leaveDaysAllocated: newTotalDays });
-      refreshData();
+      await refreshData();
+      
+      toast({
+        title: "Success",
+        description: "Leave days updated successfully"
+      });
     } catch (error) {
       console.error('Error updating leave days:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update leave days",
+        variant: "destructive"
+      });
     }
   };
 
-  const handleLeaveSubmit = (data: {
+  const handleLeaveSubmit = async (data: {
     employeeId: string;
     startDate: Date;
     endDate: Date;
     reason: string;
   }) => {
-    // Calculate days difference
-    const diffTime = Math.abs(data.endDate.getTime() - data.startDate.getTime());
-    const daysUsed = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end days
-
-    // Create leave record
-    const newLeaveRecord = {
-      employeeId: data.employeeId,
-      startDate: data.startDate,
-      endDate: data.endDate,
-      daysUsed,
-      reason: data.reason,
-      status: "Approved" as const
-    };
-
-    // Add to storage
-    addLeaveRecord(newLeaveRecord);
-    
-    // Refresh data
-    refreshData();
-    
-    // Close form and reset selected employee
-    setIsUpdateFormOpen(false);
-    setSelectedEmployeeId(undefined);
-    
-    // Show success toast
-    toast({
-      title: "Leave Updated",
-      description: `Leave record has been successfully added.`,
-    });
+    try {
+      const daysUsed = Math.ceil((data.endDate.getTime() - data.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      
+      await addLeaveRecord({
+        employeeId: data.employeeId,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        daysUsed,
+        reason: data.reason,
+        status: "Pending"
+      });
+      
+      await refreshData();
+      setIsUpdateFormOpen(false);
+      setSelectedEmployeeId(undefined);
+      
+      toast({
+        title: "Success",
+        description: "Leave request submitted successfully"
+      });
+    } catch (error) {
+      console.error('Error submitting leave request:', error);
+      toast({
+        title: "Error",
+        description: "Failed to submit leave request",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleDeleteLeave = (leaveId: string) => {
-    deleteLeaveRecord(leaveId);
-    refreshData();
-    toast({
-      title: "Leave Deleted",
-      description: `Leave record has been deleted.`,
-    });
+  const handleDeleteLeave = async (leaveId: string) => {
+    try {
+      await deleteLeaveRecord(leaveId);
+      await refreshData();
+      
+      toast({
+        title: "Success",
+        description: "Leave record deleted successfully"
+      });
+    } catch (error) {
+      console.error('Error deleting leave record:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete leave record",
+        variant: "destructive"
+      });
+    }
   };
 
-  if (loading || isLoadingEmployees) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
