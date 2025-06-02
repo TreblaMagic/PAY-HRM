@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   Card,
@@ -13,13 +14,13 @@ import { DateRangePicker } from "@/components/attendance/DateRangePicker";
 
 interface AttendanceReportProps {
   dateRange: DateRange;
-  onDateRangeChange: (range: DateRange) => void;
+  setDateRange: React.Dispatch<React.SetStateAction<DateRange>>;
   onGenerateReport: () => void;
 }
 
 export function AttendanceReport({
   dateRange,
-  onDateRangeChange,
+  setDateRange,
   onGenerateReport
 }: AttendanceReportProps) {
   return (
@@ -33,7 +34,7 @@ export function AttendanceReport({
           <div className="md:col-span-2">
             <DateRangePicker 
               dateRange={dateRange} 
-              setDateRange={onDateRangeChange} 
+              setDateRange={setDateRange} 
               onPrint={onGenerateReport} 
             />
           </div>
