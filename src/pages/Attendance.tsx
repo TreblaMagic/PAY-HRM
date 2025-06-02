@@ -126,11 +126,28 @@ export default function AttendancePage() {
 
   const handleGenerateReport = async () => {
     try {
+      console.log('Starting report generation...');
+      console.log('Date Range:', dateRange);
+      
       const records = dateRange.startDate && dateRange.endDate
         ? await getAttendanceByDateRange(dateRange.startDate, dateRange.endDate)
         : attendanceRecords;
+      
+      console.log('Records to include in PDF:', records);
+      console.log('Employees data:', employees);
 
-      await generateAttendancePDF(records, employees);
+      if (!dateRange.startDate || !dateRange.endDate) {
+        toast({
+          title: "Warning",
+          description: "Please select a date range before generating the report",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      await generateAttendancePDF(records, dateRange, employees);
+      console.log('PDF generation completed');
+      
       toast({
         title: "Success",
         description: "Attendance report generated successfully"
@@ -162,16 +179,14 @@ export default function AttendancePage() {
           <AttendanceReport
             dateRange={dateRange}
             onDateRangeChange={handleDateRangeChange}
-            onSearch={handleSearch}
             onGenerateReport={handleGenerateReport}
           />
 
           <AttendanceTable
             records={attendanceRecords}
-            employees={employees}
             searchTerm={searchTerm}
+            setSearchTerm={handleSearch}
             onDelete={handleDelete}
-            isLoading={isLoading}
           />
         </div>
       </div>
