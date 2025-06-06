@@ -35,7 +35,7 @@ export function LeaveRequestForm({ employees, onSubmit }: LeaveRequestFormProps)
         endDate,
         daysUsed,
         reason,
-        status: "Pending"
+        status: "Approved"
       });
       resetForm();
     }

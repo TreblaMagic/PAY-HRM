@@ -154,15 +154,18 @@ export const calculateEmployeeLeaveBalances = async (): Promise<EmployeeLeaveBal
 
 // Add new leave record
 export const addLeaveRecord = async (record: Omit<LeaveRecord, "id" | "createdAt">): Promise<LeaveRecord> => {
+  // Calculate days_used consistently
+  const daysUsed = Math.ceil((record.endDate.getTime() - record.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
   const { data, error } = await supabase
     .from('leave_records')
     .insert([{
       employee_id: record.employeeId,
       start_date: record.startDate.toISOString().split('T')[0],
       end_date: record.endDate.toISOString().split('T')[0],
-      days_used: record.daysUsed,
+      days_used: daysUsed, // Use calculated value instead of passed value
       reason: record.reason,
-      status: record.status
+      status: 'Approved' // Always set status to Approved
     }])
     .select(`
       id,

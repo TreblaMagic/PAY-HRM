@@ -80,7 +80,8 @@ export default function LeaveManagement() {
       if (!employee) return;
       
       await updateEmployee({ ...employee, leaveDaysAllocated: newTotalDays });
-      await refreshData();
+      
+      await fetchEmployeesAndData();
       
       toast({
         title: "Success",
@@ -106,17 +107,17 @@ export default function LeaveManagement() {
       const daysUsed = Math.ceil((data.endDate.getTime() - data.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
       await addLeaveRecord({
-      employeeId: data.employeeId,
-      startDate: data.startDate,
-      endDate: data.endDate,
-      daysUsed,
-      reason: data.reason,
-        status: "Pending"
+        employeeId: data.employeeId,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        daysUsed,
+        reason: data.reason,
+        status: "Approved"
       });
       
-      await refreshData();
-    setIsUpdateFormOpen(false);
-    setSelectedEmployeeId(undefined);
+      await fetchEmployeesAndData();
+      setIsUpdateFormOpen(false);
+      setSelectedEmployeeId(undefined);
     
       toast({
         title: "Success",
@@ -124,18 +125,19 @@ export default function LeaveManagement() {
       });
     } catch (error) {
       console.error('Error submitting leave request:', error);
-    toast({
+      toast({
         title: "Error",
         description: "Failed to submit leave request",
         variant: "destructive"
-    });
+      });
     }
   };
 
   const handleDeleteLeave = async (leaveId: string) => {
     try {
       await deleteLeaveRecord(leaveId);
-      await refreshData();
+      
+      await fetchEmployeesAndData();
       
       toast({
         title: "Success",
@@ -143,11 +145,11 @@ export default function LeaveManagement() {
       });
     } catch (error) {
       console.error('Error deleting leave record:', error);
-    toast({
+      toast({
         title: "Error",
         description: "Failed to delete leave record",
         variant: "destructive"
-    });
+      });
     }
   };
 

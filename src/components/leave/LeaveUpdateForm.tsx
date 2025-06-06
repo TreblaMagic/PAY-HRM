@@ -29,7 +29,9 @@ interface LeaveUpdateFormProps {
     employeeId: string;
     startDate: Date;
     endDate: Date;
+    daysUsed: number;
     reason: string;
+    status: string;
   }) => void;
   selectedEmployeeId?: string;
   employees: Employee[];
@@ -56,11 +58,14 @@ export function LeaveUpdateForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (employeeId && startDate && endDate && reason) {
+      const daysUsed = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
       onSubmit({
         employeeId,
         startDate,
         endDate,
+        daysUsed,
         reason,
+        status: "Approved"
       });
       resetForm();
     }
