@@ -131,6 +131,8 @@ const Dashboard = () => {
     stats = allStats.filter(card => ["Total Employees", "Today's Attendance", "On Leave Today"].includes(card.title));
   } else if (userRole === 'Finance') {
     stats = allStats.filter(card => ["Total Employees", "Total Payroll"].includes(card.title));
+  } else if (userRole === 'Agent') {
+    stats = []; // Agent role sees no stats cards
   }
 
   const calendarDates = Array.from({ length: 35 }, (_, i) => {

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +15,7 @@ const formSchema = z.object({
   username: z.string().min(1, "Username is required"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  role: z.enum(["HR", "Finance", "IT"] as const),
+  role: z.enum(["HR", "Finance", "IT", "Agent"] as const),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -116,6 +115,7 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({ onUserCreated })
                   <SelectItem value="HR">HR</SelectItem>
                   <SelectItem value="Finance">Finance</SelectItem>
                   <SelectItem value="IT">IT</SelectItem>
+                  <SelectItem value="Agent">Agent</SelectItem>
                 </SelectContent>
               </Select>
               {errors.role && (

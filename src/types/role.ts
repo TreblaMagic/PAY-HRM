@@ -1,4 +1,4 @@
-export type UserRole = 'HR' | 'Finance' | 'IT';
+export type UserRole = 'HR' | 'Finance' | 'IT' | 'Agent';
 
 export interface UserWithRole {
   id: string;
@@ -33,5 +33,10 @@ export const rolePermissions: Record<UserRole, string[]> = {
     '/documents',
     '/isp/settings',
     '/roles-permissions'
+  ],
+  'Agent': [
+    '/dashboard',
+    '/isp',
+    '/isp/settings'
   ]
 };

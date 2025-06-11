@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -101,6 +100,7 @@ export const UserEditDialog: React.FC<UserEditDialogProps> = ({ user, open, onCl
                   <SelectItem value="HR">HR</SelectItem>
                   <SelectItem value="Finance">Finance</SelectItem>
                   <SelectItem value="IT">IT</SelectItem>
+                  <SelectItem value="Agent">Agent</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -130,6 +130,14 @@ export const UserEditDialog: React.FC<UserEditDialogProps> = ({ user, open, onCl
                 {selectedRole === 'IT' && (
                   <ul className="list-disc list-inside space-y-1">
                     <li>All pages (Full access)</li>
+                  </ul>
+                )}
+                
+                {selectedRole === 'Agent' && (
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Dashboard</li>
+                    <li>ISP</li>
+                    <li>ISP Settings</li>
                   </ul>
                 )}
               </div>
