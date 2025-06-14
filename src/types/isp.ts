@@ -64,13 +64,13 @@ export interface Invoice {
   notes?: string;
 }
 
-export type ServiceSetup = {
+export interface ServiceSetup {
   equipment: { equipment: Equipment; quantity: number }[];
-  internetSpeed: InternetSpeed;
+  internetSpeed: InternetSpeed[];
   setupCost: SetupCost;
   managedService?: ManagedService;
   customerName: string;
   customerEmail: string;
   customerPhone: string;
   customerAddress: string;
-};
+}

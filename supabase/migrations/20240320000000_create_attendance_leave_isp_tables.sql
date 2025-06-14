@@ -1,3 +1,17 @@
+-- Create employees table
+CREATE TABLE IF NOT EXISTS employees (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    position TEXT NOT NULL,
+    department TEXT NOT NULL,
+    hire_date DATE NOT NULL,
+    salary DECIMAL(10,2) NOT NULL,
+    leave_days_allocated INTEGER NOT NULL DEFAULT 15,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
 -- Create attendance table
 CREATE TABLE IF NOT EXISTS attendance (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,

@@ -107,17 +107,17 @@ export default function LeaveManagement() {
       const daysUsed = Math.ceil((data.endDate.getTime() - data.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
       await addLeaveRecord({
-        employeeId: data.employeeId,
-        startDate: data.startDate,
-        endDate: data.endDate,
-        daysUsed,
-        reason: data.reason,
+      employeeId: data.employeeId,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      daysUsed,
+      reason: data.reason,
         status: "Approved"
       });
       
       await fetchEmployeesAndData();
-      setIsUpdateFormOpen(false);
-      setSelectedEmployeeId(undefined);
+    setIsUpdateFormOpen(false);
+    setSelectedEmployeeId(undefined);
     
       toast({
         title: "Success",
@@ -125,11 +125,11 @@ export default function LeaveManagement() {
       });
     } catch (error) {
       console.error('Error submitting leave request:', error);
-      toast({
+    toast({
         title: "Error",
         description: "Failed to submit leave request",
         variant: "destructive"
-      });
+    });
     }
   };
 
@@ -145,11 +145,11 @@ export default function LeaveManagement() {
       });
     } catch (error) {
       console.error('Error deleting leave record:', error);
-      toast({
+    toast({
         title: "Error",
         description: "Failed to delete leave record",
         variant: "destructive"
-      });
+    });
     }
   };
 

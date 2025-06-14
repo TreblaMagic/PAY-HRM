@@ -97,16 +97,16 @@ const ISP = () => {
           amount: eq.equipment.price * eq.quantity,
           type: 'equipment' as const
         })),
-        // Add internet speed
-        {
-          id: serviceSetup.internetSpeed.id,
-          name: `${serviceSetup.internetSpeed.mbps} Mbps`,
-          description: serviceSetup.internetSpeed.description,
+        // Add internet speeds
+        ...serviceSetup.internetSpeed.map(speed => ({
+          id: speed.id,
+          name: `${speed.mbps} Mbps`,
+          description: speed.description,
           quantity: 1,
-          unitPrice: serviceSetup.internetSpeed.price,
-          amount: serviceSetup.internetSpeed.price,
+          unitPrice: speed.price,
+          amount: speed.price,
           type: 'internet_speed' as const
-        },
+        })),
         // Add setup cost
         {
           id: serviceSetup.setupCost.id,
@@ -179,16 +179,16 @@ const ISP = () => {
           amount: eq.equipment.price * eq.quantity,
           type: 'equipment' as const
         })),
-        // Add internet speed
-        {
-          id: serviceSetup.internetSpeed.id,
-          name: `${serviceSetup.internetSpeed.mbps} Mbps`,
-          description: serviceSetup.internetSpeed.description,
+        // Add internet speeds
+        ...serviceSetup.internetSpeed.map(speed => ({
+          id: speed.id,
+          name: `${speed.mbps} Mbps`,
+          description: speed.description,
           quantity: 1,
-          unitPrice: serviceSetup.internetSpeed.price,
-          amount: serviceSetup.internetSpeed.price,
+          unitPrice: speed.price,
+          amount: speed.price,
           type: 'internet_speed' as const
-        },
+        })),
         // Add setup cost
         {
           id: serviceSetup.setupCost.id,

@@ -117,7 +117,7 @@ export const InternetSpeedManagement: React.FC<InternetSpeedManagementProps> = (
               <TableRow key={speed.id}>
                 <TableCell>{speed.mbps}</TableCell>
                 <TableCell>{speed.description}</TableCell>
-                <TableCell>${speed.price.toFixed(2)}</TableCell>
+                <TableCell>₦{speed.price.toFixed(2)}</TableCell>
                 <TableCell>
                   <Dialog open={isEditDialogOpen && selectedSpeed?.id === speed.id} onOpenChange={setIsEditDialogOpen}>
                     <DialogTrigger asChild>

@@ -103,7 +103,9 @@ export function Sidebar({ activePage }: SidebarProps) {
         </nav>
         
         {/* FINANCE MANAGEMENT SECTION */}
-        <h3 className="text-xs font-semibold text-gray-400 mt-8 mb-4">FINANCE MANAGEMENT</h3>
+        <h3 className="text-xs font-semibold text-gray-400 mt-8 mb-4">
+          FINANCE MANAGEMENT
+        </h3>
         <nav className="space-y-1">
           {hasPermission('/payroll') && (
             <Link 

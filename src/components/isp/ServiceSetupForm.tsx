@@ -25,7 +25,7 @@ export const ServiceSetupForm = ({
   onGenerateSeparateInvoices
 }: ServiceSetupFormProps) => {
   const [selectedEquipment, setSelectedEquipment] = useState<{ equipment: Equipment; quantity: number }[]>([]);
-  const [selectedSpeed, setSelectedSpeed] = useState<InternetSpeed | null>(null);
+  const [selectedSpeeds, setSelectedSpeeds] = useState<{ speed: InternetSpeed; quantity: number }[]>([]);
   const [selectedSetup, setSelectedSetup] = useState<SetupCost | null>(null);
   const [selectedService, setSelectedService] = useState<ManagedService | null>(null);
   const [customerName, setCustomerName] = useState("");
@@ -55,9 +55,26 @@ export const ServiceSetupForm = ({
     setSelectedEquipment(updatedEquipment);
   };
 
-  const handleSpeedChange = (speedId: string) => {
+  const handleAddSpeed = (speedId: string) => {
     const speed = internetSpeeds.find(s => s.id === speedId);
-    if (speed) setSelectedSpeed(speed);
+    if (speed) {
+      setSelectedSpeeds(prev => [
+        ...prev, 
+        { speed, quantity: 1 }
+      ]);
+    }
+  };
+
+  const handleRemoveSpeed = (index: number) => {
+    setSelectedSpeeds(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSpeedQuantityChange = (index: number, newQuantity: number) => {
+    if (newQuantity < 1) return;
+    
+    const updatedSpeeds = [...selectedSpeeds];
+    updatedSpeeds[index].quantity = newQuantity;
+    setSelectedSpeeds(updatedSpeeds);
   };
 
   const handleSetupChange = (setupId: string) => {
@@ -76,11 +93,11 @@ export const ServiceSetupForm = ({
   };
 
   const handleGenerateInvoice = () => {
-    if (!selectedSpeed || !selectedSetup || !customerName) return;
+    if (!selectedSpeeds.length > 0 || !selectedSetup || !customerName) return;
     
     const serviceSetup: ServiceSetup = {
       equipment: selectedEquipment,
-      internetSpeed: selectedSpeed,
+      internetSpeed: selectedSpeeds.map(item => item.speed),
       setupCost: selectedSetup,
       managedService: selectedService || undefined,
       customerName,
@@ -93,11 +110,11 @@ export const ServiceSetupForm = ({
   };
 
   const handleGenerateSeparateInvoices = () => {
-    if (!selectedSpeed || !selectedSetup || !customerName) return;
+    if (!selectedSpeeds.length > 0 || !selectedSetup || !customerName) return;
     
     const serviceSetup: ServiceSetup = {
       equipment: selectedEquipment,
-      internetSpeed: selectedSpeed,
+      internetSpeed: selectedSpeeds.map(item => item.speed),
       setupCost: selectedSetup,
       managedService: selectedService || undefined,
       customerName,
@@ -110,7 +127,7 @@ export const ServiceSetupForm = ({
   };
 
   const isFormValid = selectedEquipment.length > 0 && 
-                      selectedSpeed !== null && 
+                      selectedSpeeds.length > 0 && 
                       selectedSetup !== null && 
                       customerName.trim() !== "" && 
                       customerEmail.trim() !== "";
@@ -236,20 +253,70 @@ export const ServiceSetupForm = ({
         </div>
         
         {/* Internet Speed */}
-        <div className="space-y-2">
-          <Label htmlFor="internetSpeed">Internet Speed</Label>
-          <Select onValueChange={handleSpeedChange}>
-            <SelectTrigger id="internetSpeed">
-              <SelectValue placeholder="Select Internet Speed" />
-            </SelectTrigger>
-            <SelectContent>
-              {internetSpeeds.map((speed) => (
-                <SelectItem key={speed.id} value={speed.id}>
-                  {speed.mbps} Mbps - ₦{speed.price} ({speed.description})
-                </SelectItem>
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <Label>Internet Speed</Label>
+            <Select onValueChange={handleAddSpeed}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Add Speed" />
+              </SelectTrigger>
+              <SelectContent>
+                {internetSpeeds.map((speed) => (
+                  <SelectItem key={speed.id} value={speed.id}>
+                    {speed.mbps} Mbps - ₦{speed.price} ({speed.description})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          {selectedSpeeds.length === 0 ? (
+            <div className="text-center py-4 text-gray-500">
+              No internet speeds selected. Add speeds from the dropdown above.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {selectedSpeeds.map((item, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <p className="font-medium">{item.speed.mbps} Mbps</p>
+                      <p className="text-xs text-gray-500">₦{item.speed.price} each</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center">
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        onClick={() => handleSpeedQuantityChange(index, item.quantity - 1)}
+                        disabled={item.quantity <= 1}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <Input 
+                        type="number" 
+                        value={item.quantity} 
+                        onChange={(e) => handleSpeedQuantityChange(index, parseInt(e.target.value) || 1)} 
+                        className="w-14 text-center mx-1"
+                        min={1}
+                      />
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        onClick={() => handleSpeedQuantityChange(index, item.quantity + 1)}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={() => handleRemoveSpeed(index)}>
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </div>
+                </div>
               ))}
-            </SelectContent>
-          </Select>
+            </div>
+          )}
         </div>
         
         {/* Setup Cost */}

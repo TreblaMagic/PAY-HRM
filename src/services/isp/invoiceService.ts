@@ -16,8 +16,8 @@ export const generateInvoice = async (customerData: CustomerData, items: Invoice
   try {
     // Get markup settings
     const { data: settingsData, error: settingsError } = await supabase
-      .from('isp_settings')
-      .select('markup_settings')
+      .from('isp_markup_settings')
+      .select('*')
       .order('id', { ascending: true })
       .limit(1);
 
@@ -30,7 +30,12 @@ export const generateInvoice = async (customerData: CustomerData, items: Invoice
       throw new Error('No markup settings found');
     }
 
-    const markupSettings = (settingsData[0].markup_settings as unknown) as MarkupSettings;
+    const markupSettings = {
+      equipmentMarkup: settingsData[0].equipment_markup,
+      mbpsMarkup: settingsData[0].mbps_markup,
+      setupMarkup: settingsData[0].setup_markup,
+      managedServicesMarkup: settingsData[0].managed_services_markup
+    };
 
     // Calculate prices with markup
     const itemsWithMarkup = items.map(item => {
@@ -124,8 +129,8 @@ export const generateSeparateInvoices = async (customerData: CustomerData, items
   try {
     // Get markup settings
     const { data: settingsData, error: settingsError } = await supabase
-      .from('isp_settings')
-      .select('markup_settings')
+      .from('isp_markup_settings')
+      .select('*')
       .order('id', { ascending: true })
       .limit(1);
 
@@ -138,7 +143,12 @@ export const generateSeparateInvoices = async (customerData: CustomerData, items
       throw new Error('No markup settings found');
     }
 
-    const markupSettings = (settingsData[0].markup_settings as unknown) as MarkupSettings;
+    const markupSettings = {
+      equipmentMarkup: settingsData[0].equipment_markup,
+      mbpsMarkup: settingsData[0].mbps_markup,
+      setupMarkup: settingsData[0].setup_markup,
+      managedServicesMarkup: settingsData[0].managed_services_markup
+    };
 
     // Calculate base prices and markup amounts
     const baseItems = items.map(item => ({

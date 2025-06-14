@@ -228,7 +228,7 @@ export const updateMarkupSettings = async (settings: MarkupSettings): Promise<vo
     }
   } else {
     // Update existing settings
-    const { error: updateError } = await supabase
+  const { error: updateError } = await supabase
       .from('isp_markup_settings')
       .update({
         equipment_markup: settings.equipmentMarkup,
@@ -236,11 +236,11 @@ export const updateMarkupSettings = async (settings: MarkupSettings): Promise<vo
         setup_markup: settings.setupMarkup,
         managed_services_markup: settings.managedServicesMarkup
       })
-      .eq('id', data[0].id);
+    .eq('id', data[0].id);
 
-    if (updateError) {
-      console.error('Error updating markup settings:', updateError);
-      throw updateError;
+  if (updateError) {
+    console.error('Error updating markup settings:', updateError);
+    throw updateError;
     }
   }
 };

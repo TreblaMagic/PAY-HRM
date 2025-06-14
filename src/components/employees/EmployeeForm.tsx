@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,14 +23,15 @@ const employeeSchema = z.object({
   phone: z.string().min(7, { message: "Phone number is required" }),
   hireDate: z.string().min(1, { message: "Hire date is required" }),
   salary: z.coerce.number().min(1, { message: "Salary is required" }),
+  leaveDaysAllocated: z.coerce.number().min(1, { message: "Leave days allocated is required" }).default(15),
 });
 
 type EmployeeFormValues = z.infer<typeof employeeSchema>;
 
 interface EmployeeFormProps {
   initialData?: Employee;
-  onSubmit: (data: EmployeeFormValues) => void;
-  onCancel: () => void;
+  onSubmit: (data: Omit<Employee, "id">) => void;
+  onCancel?: () => void;
 }
 
 export function EmployeeForm({ initialData, onSubmit, onCancel }: EmployeeFormProps) {
@@ -45,6 +45,7 @@ export function EmployeeForm({ initialData, onSubmit, onCancel }: EmployeeFormPr
       phone: "",
       hireDate: new Date().toISOString().split("T")[0],
       salary: 0,
+      leaveDaysAllocated: 15,
     },
   });
 
@@ -137,7 +138,7 @@ export function EmployeeForm({ initialData, onSubmit, onCancel }: EmployeeFormPr
           />
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <FormField
             control={form.control}
             name="hireDate"
@@ -157,9 +158,23 @@ export function EmployeeForm({ initialData, onSubmit, onCancel }: EmployeeFormPr
             name="salary"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Salary (₦)</FormLabel>
+                <FormLabel>Salary</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field} />
+                  <Input type="number" placeholder="50000" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="leaveDaysAllocated"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Leave Days Allocated</FormLabel>
+                <FormControl>
+                  <Input type="number" placeholder="15" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -168,12 +183,12 @@ export function EmployeeForm({ initialData, onSubmit, onCancel }: EmployeeFormPr
         </div>
         
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button type="submit">
-            {initialData ? "Update Employee" : "Add Employee"}
-          </Button>
+          {onCancel && (
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+          )}
+          <Button type="submit">Save</Button>
         </div>
       </form>
     </Form>
