@@ -31,7 +31,7 @@ type DashboardLayoutProps = {
 };
 
 const DashboardLayout = ({ children, title, activePage }: DashboardLayoutProps) => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { hasPermission, userRole } = useRole();
   const location = useLocation();
   const currentPath = location.pathname;
@@ -189,7 +189,7 @@ const DashboardLayout = ({ children, title, activePage }: DashboardLayoutProps) 
               </Link>
             )}
             <button
-              onClick={() => user?.signOut?.()}
+              onClick={signOut}
               className="w-full flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md"
             >
               <LogOut className="mr-3 h-5 w-5" />
