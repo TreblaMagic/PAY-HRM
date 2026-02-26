@@ -1,73 +1,172 @@
-# Welcome to your Lovable project
+# PAY & HRM
 
-## Project info
+A comprehensive business management platform
 
-**URL**: https://lovable.dev/projects/c457d24a-b6be-4b0b-8af9-f7cfb63172cf
+> **Note:** This repository represents a limited showcase from a much larger internal platform developed for Briclinks Africa Plc (BTEL), supporting telecom and ISP operations across employee management, payroll, attendance tracking, leave management, ISP service invoicing, and additional operational systems. Due to NDA and client confidentiality agreements, the full production system cannot be publicly shared. This repo highlights selected features and architecture used within the broader solution.
 
-## How can I edit this code?
+## Overview
 
-There are several ways of editing your application.
+PAY & HRM is a full-stack web application designed to streamline operations for telecom and internet service providers. The platform manages the complete employee lifecycle, from hiring to payroll, while also handling customer relationships and service invoicing. Built with modern web technologies, it provides a secure, role-based interface for HR, Finance, and IT departments.
 
-**Use Lovable**
+## Features
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/c457d24a-b6be-4b0b-8af9-f7cfb63172cf) and start prompting.
+### Core Modules
+- **Authentication & Authorization**
+- **Employee Management**
+- **Attendance Tracking**
+- **Leave Management**
+- **Payroll System**
+- **ISP Services & Invoicing**
+- **Document Management**
+- **Dashboard & Analytics**
 
-Changes made via Lovable will be committed automatically to this repo.
+## Tech Stack
 
-**Use your preferred IDE**
+### Frontend
+- **React 18.3** - UI framework
+- **TypeScript** - Type safety
+- **Vite 5.4** - Build tool and dev server
+- **React Router DOM 6.26** - Client-side routing
+- **TanStack Query 5.56** - Server state management
+- **React Hook Form 7.53** - Form handling
+- **Zod 3.23** - Schema validation
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### UI Components & Styling
+- **shadcn/ui** - Component library (Radix UI primitives)
+- **Tailwind CSS 3.4** - Utility-first CSS framework
+- **Lucide React** - Icon library
+- **Recharts 2.12** - Data visualization
+- **date-fns 3.6** - Date manipulation
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Backend & Database
+- **Supabase** - Backend-as-a-Service
+  - PostgreSQL database (local via Docker)
+  - Supabase Auth for authentication
+  - Row Level Security (RLS) policies
+  - REST API (auto-generated)
+- **Supabase CLI 2.76** - Local development tooling
 
-Follow these steps:
+### PDF Generation
+- **jsPDF 2.5** - PDF creation
+- **html2canvas 1.4** - HTML to image conversion
+- **jspdf-autotable 5.0** - Table rendering in PDFs
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Development Tools
+- **Docker Desktop** - Required for local Supabase
+- **ESLint** - Code linting
+- **TypeScript** - Static type checking
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## Architecture Overview
 
-# Step 3: Install the necessary dependencies.
-npm i
+### System Architecture
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        Frontend (React)                     │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐     │
+│  │  Pages   │  │Components│  │ Services │  │ Contexts │     │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘     │
+│       │             │             │             │           │
+│       └─────────────┴─────────────┴─────────────┘           │
+│                          │                                  │
+│                    ┌─────▼─────┐                            │
+│                    │ Supabase  │                            │
+│                    │  Client   │                            │
+│                    └─────┬─────┘                            │
+└──────────────────────────┼──────────────────────────────────┘
+                           │
+┌──────────────────────────▼──────────────────────────────────┐
+│              Supabase (Local via Docker)                    │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│  │  PostgreSQL  │  │  Supabase    │  │   Storage    │       │
+│  │   Database   │  │    Auth      │  │   (S3-like)  │       │
+│  └──────────────┘  └──────────────┘  └──────────────┘       │
+│         │                                                   │
+│         │ RLS Policies                                      │
+│         │                                                   │
+│  ┌──────▼──────────────────────────────────────┐            │
+│  │  Tables: employees, attendance, invoices,   │            │
+│  │  customers, bonuses, leave_records, etc.    │            │
+│  └─────────────────────────────────────────────┘            │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-**Edit a file directly in GitHub**
+## Getting Started
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Prerequisites
+- **Node.js** 18+ and npm (or compatible package manager)
+- **Docker Desktop** - Must be installed and running
+- **Git** - For cloning the repository
 
-**Use GitHub Codespaces**
+### Installation
+1. **Clone the repository:**
+   ```bash
+   git clone <repository-url>
+   cd bt-el-nexus-link
+   ```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-## What technologies are used for this project?
+3. **Start Docker Desktop:**
+   - Ensure Docker Desktop is installed and running
+   - Wait for Docker to fully start before proceeding
 
-This project is built with:
+4. **Start Supabase locally:**
+   ```bash
+   npm run db:start
+   ```
+   
+   This will start all Supabase services (PostgreSQL, Auth, Storage, etc.) in Docker containers.
+   
+   **Important:** Copy the output values for `API URL` and `anon key` - you'll need them for the `.env` file.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+5. **Create `.env` file:**
+   
+   Create a `.env` file in the root directory:
+   ```env
+   VITE_SUPABASE_URL=http://127.0.0.1:54321
+   VITE_SUPABASE_ANON_KEY=your-anon-key-from-supabase-start-output
+   ```
+   
+   Replace `your-anon-key-from-supabase-start-output` with the actual anon key from step 4.
 
-## How can I deploy this project?
+6. **Apply database migrations:**
+   ```bash
+   npm run db:reset
+   ```
+   
+   This will:
+   - Drop all existing tables
+   - Run all migrations from `supabase/migrations/`
+   - Create the complete database schema
 
-Simply open [Lovable](https://lovable.dev/projects/c457d24a-b6be-4b0b-8af9-f7cfb63172cf) and click on Share -> Publish.
+7. **Create a test user (optional):**
+   
+   You can create a test user using the Supabase Admin API. See `ADDING_USERS.md` for detailed instructions, or use the provided script:
+   ```bash
+   node create_user_via_api.js
+   ```
+   
+   Make sure to add `VITE_SUPABASE_SERVICE_ROLE_KEY` to your `.env` file first (get it from `npm run db:start` output).
 
-## Can I connect a custom domain to my Lovable project?
+8. **Start the development server:**
+   ```bash
+   npm run dev
+   ```
+   
+   The app will be available at `http://localhost:8080`
 
-Yes, you can!
+### Verification
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+After starting, verify the setup:
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+1. ✅ App loads without console errors
+2. ✅ Can navigate to login page
+3. ✅ Can sign in with test user credentials
+4. ✅ Dashboard displays (may be empty initially)
+5. ✅ Can access protected routes based on user role
+
+**Built with ❤️ for BTEL**

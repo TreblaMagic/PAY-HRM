@@ -72,7 +72,7 @@ const Profile = () => {
         <div className="container mx-auto px-4 md:px-6 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center">
-              <span className="text-2xl font-bold">BTEL</span>
+              <span className="text-2xl font-bold">PAY & HRM</span>
               <span className="ml-1 text-2xl font-bold text-accent">.</span>
               <span className="ml-4 text-lg">Profile</span>
             </div>
