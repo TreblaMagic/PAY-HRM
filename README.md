@@ -93,6 +93,11 @@ PAY & HRM is a full-stack web application designed to streamline operations for 
 
 ## Getting Started
 
+   visit `https://pay-hrm.vercel.app/` use Email: `cepigyva@denipl.com` and password: `admin123` to login.
+
+
+## Local Deployment
+
 ### Prerequisites
 - **Node.js** 18+ and npm (or compatible package manager)
 - **Docker Desktop** - Must be installed and running
@@ -101,8 +106,8 @@ PAY & HRM is a full-stack web application designed to streamline operations for 
 ### Installation
 1. **Clone the repository:**
    ```bash
-   git clone <repository-url>
-   cd bt-el-nexus-link
+   git clone https://github.com/TreblaMagic/PAY-HRM.git
+   cd PAY-HRM
    ```
 
 2. **Install dependencies:**
