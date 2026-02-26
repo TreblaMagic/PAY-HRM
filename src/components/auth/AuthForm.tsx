@@ -46,7 +46,7 @@ export const AuthForm = () => {
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle className="text-2xl text-center">Welcome to BTEL</CardTitle>
+        <CardTitle className="text-2xl text-center">Welcome to PAY & HRM</CardTitle>
         <CardDescription className="text-center">
           Sign in to your account
         </CardDescription>

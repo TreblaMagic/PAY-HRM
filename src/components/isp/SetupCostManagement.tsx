@@ -95,7 +95,7 @@ export const SetupCostManagement: React.FC<SetupCostManagementProps> = ({ setupC
                       min={0}
                     />
                   ) : (
-                    `₦${cost.price}`
+                    `$${cost.price}`
                   )}
                 </TableCell>
                 <TableCell className="text-right flex gap-2 justify-end">

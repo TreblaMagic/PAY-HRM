@@ -65,7 +65,8 @@ export default function AttendancePage() {
   const handleAddAttendance = async (record: Omit<AttendanceRecord, "id">) => {
     try {
       const newRecord = await addAttendance(record);
-      setAttendanceRecords(prev => [...prev, newRecord]);
+      // Refresh the attendance records list to ensure we have the latest data
+      await loadAttendanceRecords();
       toast({
         title: "Success",
         description: "Attendance record added successfully"
@@ -74,7 +75,7 @@ export default function AttendancePage() {
       console.error("Error adding attendance record:", error);
       toast({
         title: "Error",
-        description: "Failed to add attendance record",
+        description: error instanceof Error ? error.message : "Failed to add attendance record",
         variant: "destructive"
       });
     }

@@ -13,6 +13,8 @@ declare module "jspdf" {
 
 // Helper function to calculate punctuality score
 function calculatePunctualityScore(records: AttendanceRecord[]): number {
+  if (records.length === 0) return 0;
+  
   const points = {
     "On Time": 3,
     "Late": 1,
@@ -43,9 +45,9 @@ export function generateAttendancePDF(
     console.log('PDF Generator - Records count:', records.length);
     console.log('PDF Generator - Date Range:', dateRange);
     
-    if (!dateRange.startDate || !dateRange.endDate || records.length === 0) {
-      console.error('PDF Generator - Invalid input:', { dateRange, recordsCount: records.length });
-      throw new Error('Invalid input: date range or records missing');
+    if (!dateRange.startDate || !dateRange.endDate) {
+      console.error('PDF Generator - Invalid input: date range missing');
+      throw new Error('Invalid input: date range is required');
     }
     
     // Create new jsPDF instance with proper initialization
@@ -68,6 +70,24 @@ export function generateAttendancePDF(
       14, 
       32
     );
+    
+    // Check if there are any records
+    if (records.length === 0) {
+      doc.setFontSize(12);
+      doc.text("No attendance records found for the selected date range.", 14, 50);
+      
+      // Add page numbers
+      const pageCount = doc.internal.pages.length;
+      for (let i = 1; i <= pageCount - 1; i++) {
+        doc.setPage(i);
+        doc.setFontSize(10);
+        doc.text(`Page ${i} of ${pageCount - 1}`, doc.internal.pageSize.width - 30, doc.internal.pageSize.height - 10);
+      }
+      
+      const fileName = `Attendance_Report_${format(new Date(), "yyyy-MM-dd")}.pdf`;
+      doc.save(fileName);
+      return doc;
+    }
     
     // Group records by employee
     const employeeMap = new Map<string, AttendanceRecord[]>();

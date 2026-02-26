@@ -19,9 +19,9 @@ interface EmployeesTableProps {
 
 export function EmployeesTable({ employees, onEdit, onDelete }: EmployeesTableProps) {
   const formatSalary = (salary: number) => {
-    return new Intl.NumberFormat('en-NG', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'NGN',
+      currency: 'USD',
       minimumFractionDigits: 0,
       currencyDisplay: 'symbol'
     }).format(salary);

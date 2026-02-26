@@ -2,17 +2,55 @@ import React, { useRef } from 'react';
 import { Invoice } from '@/types/isp';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { X } from 'lucide-react';
+import { X, CheckCircle, XCircle } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { updateInvoiceStatus } from '@/services/isp/invoiceService';
+import { useToast } from '@/components/ui/use-toast';
 
 interface InvoicePreviewProps {
   invoices: Invoice[];
   onClose: () => void;
+  onInvoiceUpdate?: () => void; // Callback to refresh invoices after update
 }
 
-export const InvoicePreview = ({ invoices, onClose }: InvoicePreviewProps) => {
+export const InvoicePreview = ({ invoices, onClose, onInvoiceUpdate }: InvoicePreviewProps) => {
   const invoiceRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+  const [updatingStatus, setUpdatingStatus] = React.useState<string | null>(null);
+  const [localInvoices, setLocalInvoices] = React.useState<Invoice[]>(invoices);
+
+  // Update local invoices when prop changes
+  React.useEffect(() => {
+    setLocalInvoices(invoices);
+  }, [invoices]);
+
+  const handleUpdateStatus = async (invoiceId: string, status: 'paid' | 'cancelled') => {
+    setUpdatingStatus(invoiceId);
+    try {
+      const updatedInvoice = await updateInvoiceStatus(invoiceId, status);
+      // Update local state immediately
+      setLocalInvoices(prev => 
+        prev.map(inv => inv.id === invoiceId ? updatedInvoice : inv)
+      );
+      toast({
+        title: "Success",
+        description: `Invoice marked as ${status}`,
+      });
+      if (onInvoiceUpdate) {
+        onInvoiceUpdate();
+      }
+    } catch (error) {
+      console.error('Error updating invoice status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update invoice status. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setUpdatingStatus(null);
+    }
+  };
 
   const handlePrint = async () => {
     if (!invoiceRef.current) return;
@@ -55,29 +93,64 @@ export const InvoicePreview = ({ invoices, onClose }: InvoicePreviewProps) => {
       <Card className="w-full max-w-4xl max-h-[90vh] overflow-hidden">
         <div className="flex justify-between items-center p-4 border-b">
           <h2 className="text-xl font-semibold">Invoice Preview</h2>
-        <div className="flex gap-2">
+          <div className="flex gap-2">
+            {localInvoices.map((invoice) => (
+              invoice.status === 'pending' && (
+                <div key={invoice.id} className="flex gap-2">
+                  <Button
+                    onClick={() => handleUpdateStatus(invoice.id, 'paid')}
+                    variant="default"
+                    size="sm"
+                    disabled={updatingStatus === invoice.id}
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Mark as Paid
+                  </Button>
+                  <Button
+                    onClick={() => handleUpdateStatus(invoice.id, 'cancelled')}
+                    variant="destructive"
+                    size="sm"
+                    disabled={updatingStatus === invoice.id}
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Cancel Invoice
+                  </Button>
+                </div>
+              )
+            ))}
             <Button onClick={handlePrint} variant="outline">
-            Download PDF
-          </Button>
+              Download PDF
+            </Button>
             <Button onClick={onClose} variant="ghost" size="icon">
               <X className="h-4 w-4" />
-          </Button>
+            </Button>
           </div>
         </div>
         <CardContent className="p-6 overflow-auto max-h-[calc(90vh-80px)]">
           <div ref={invoiceRef} className="bg-white p-8">
-            {invoices.map((invoice, index) => (
+            {localInvoices.map((invoice, index) => (
               <div key={invoice.id} className={index > 0 ? 'mt-8 pt-8 border-t' : ''}>
                 <div className="flex justify-between items-start mb-8">
         <div>
           <h2 className="text-2xl font-bold">INVOICE</h2>
           <p className="text-gray-500">#{invoice.id.toUpperCase()}</p>
+          <div className="mt-2">
+            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+              invoice.status === 'paid' 
+                ? 'bg-green-100 text-green-800' 
+                : invoice.status === 'cancelled'
+                ? 'bg-red-100 text-red-800'
+                : 'bg-yellow-100 text-yellow-800'
+            }`}>
+              {invoice.status.toUpperCase()}
+            </span>
+          </div>
         </div>
         <div className="text-right">
-          <p className="font-bold text-lg">BTEL SmartNet Services</p>
-          <p>77 Nelson Mandela Street, Asokoro</p>
-          <p>Abuja, Nigeria</p>
-          <p>connect@btel.com.ng</p>
+          <p className="font-bold text-lg">Doe Internet Services</p>
+          <p>43 John Doe Street, Ikeja</p>
+          <p>Lagos, Nigeria</p>
+          <p>doe@btel.com.ng</p>
         </div>
       </div>
       
@@ -119,8 +192,8 @@ export const InvoicePreview = ({ invoices, onClose }: InvoicePreviewProps) => {
                         <td className="py-2">{item.name}</td>
                         <td className="py-2">{item.description}</td>
                         <td className="text-right py-2">{item.quantity}</td>
-                        <td className="text-right py-2">₦{item.unitPrice.toFixed(2)}</td>
-                        <td className="text-right py-2">₦{item.amount.toFixed(2)}</td>
+                        <td className="text-right py-2">${item.unitPrice.toFixed(2)}</td>
+                        <td className="text-right py-2">${item.amount.toFixed(2)}</td>
               </tr>
             ))}
           </tbody>
@@ -130,15 +203,15 @@ export const InvoicePreview = ({ invoices, onClose }: InvoicePreviewProps) => {
                   <div className="w-64">
           <div className="flex justify-between py-2">
                       <span>Subtotal:</span>
-                      <span>₦{invoice.subtotal.toFixed(2)}</span>
+                      <span>${invoice.subtotal.toFixed(2)}</span>
           </div>
           <div className="flex justify-between py-2">
                       <span>Tax (5%):</span>
-                      <span>₦{invoice.tax.toFixed(2)}</span>
+                      <span>${invoice.tax.toFixed(2)}</span>
           </div>
                     <div className="flex justify-between py-2 border-t font-bold">
                       <span>Total:</span>
-                      <span>₦{invoice.total.toFixed(2)}</span>
+                      <span>${invoice.total.toFixed(2)}</span>
           </div>
         </div>
       </div>

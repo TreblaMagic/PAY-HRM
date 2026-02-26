@@ -102,7 +102,7 @@ export const ManagedServiceManagement: React.FC<ManagedServiceManagementProps> =
                       min={0}
                     />
                   ) : (
-                    `₦${service.price}`
+                    `$${service.price}`
                   )}
                 </TableCell>
                 <TableCell>

@@ -39,10 +39,10 @@ export function Sidebar({ activePage }: SidebarProps) {
   return (
     <aside className="w-64 bg-white border-r border-gray-200 min-h-screen">
       <div className="p-4 border-b border-gray-200 flex items-center">
-        <img src="/lovable-uploads/a1ae4194-76ca-4004-b465-1cfc43b5e20a.png" alt="BTEL Logo" className="h-8 w-8" />
+        <img src="/uploads/a1ae4194-76ca-4004-b465-1cfc43b5e20a.png" alt="Logo" className="h-8 w-8" />
         <div className="ml-2">
-          <h1 className="text-xl font-bold text-gray-800">BTEL</h1>
-          <h2 className="text-sm font-medium text-primary">HRM</h2>
+        <h1 className="text-xl font-bold text-gray-800">INVOICE</h1>
+        <h2 className="text-sm font-medium text-primary">PAY & HRM</h2>
         </div>
       </div>
       

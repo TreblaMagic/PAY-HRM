@@ -91,7 +91,7 @@ export const ManagedServicesManagement = ({
               <p className="text-sm text-muted-foreground mb-2">{service.description}</p>
               <div className="text-sm">
                 <span className="font-medium">Price:</span>
-                <span className="ml-2">₦{service.price}</span>
+                <span className="ml-2">${service.price}</span>
               </div>
             </CardContent>
           </Card>

@@ -87,7 +87,7 @@ export const EquipmentManagement = ({ equipment, onAddEquipment, onUpdateEquipme
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
                   <span className="font-medium">Price:</span>
-                  <span className="ml-2">₦{equip.price}</span>
+                  <span className="ml-2">${equip.price}</span>
                 </div>
                 <div>
                   <span className="font-medium">In Stock:</span>

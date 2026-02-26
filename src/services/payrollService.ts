@@ -90,7 +90,7 @@ export const getEmployeePaymentStatus = async (employeeId: string): Promise<Paym
     const { data, error } = await supabase
       .from('payment_status')
       .select('*')
-      .eq('employeeId', employeeId)
+      .eq('employee_id', employeeId)
       .maybeSingle();
 
     if (error) {
@@ -109,8 +109,8 @@ export const getEmployeePaymentStatus = async (employeeId: string): Promise<Paym
     if (!data) {
       console.log('No payment status found, creating new record for employee:', employeeId);
       
-      const newStatus: PaymentStatus = {
-        employeeId,
+      const newStatus = {
+        employee_id: employeeId,
         year: new Date().getFullYear(),
         months: {
           January: false,
@@ -182,8 +182,8 @@ export const updatePaymentStatus = async (
       console.log('No existing status found, creating new record');
       
       // If no status exists, create a new one
-      const newStatus: PaymentStatus = {
-        employeeId,
+      const newStatus = {
+        employee_id: employeeId,
         year: new Date().getFullYear(),
         months
       };
@@ -215,7 +215,7 @@ export const updatePaymentStatus = async (
     const { data, error } = await supabase
       .from('payment_status')
       .update({ months })
-      .eq('employeeId', employeeId)
+      .eq('employee_id', employeeId)
       .select()
       .single();
 
@@ -272,18 +272,36 @@ export const updateMultiplePaymentStatus = (
   }
 };
 
+// Helper to convert database snake_case to application camelCase for Bonus
+const toCamelCaseBonus = (data: any): Bonus => ({
+  id: data.id,
+  employeeId: data.employee_id,
+  amount: parseFloat(data.amount),
+  reason: data.reason || '',
+  date: data.date ? new Date(data.date).toISOString() : new Date().toISOString(),
+});
+
+// Helper to convert application camelCase to database snake_case for Bonus
+const toSnakeCaseBonus = (bonus: Omit<Bonus, "id">): any => ({
+  employee_id: bonus.employeeId,
+  amount: bonus.amount,
+  reason: bonus.reason || null,
+  date: bonus.date ? bonus.date.split('T')[0] : new Date().toISOString().split('T')[0], // Convert ISO string to DATE format (YYYY-MM-DD)
+});
+
 // Get all bonuses
 export const getAllBonuses = async (): Promise<Bonus[]> => {
   const { data, error } = await supabase
     .from('bonuses')
-    .select('*');
+    .select('*')
+    .order('date', { ascending: false });
 
   if (error) {
     console.error('Error fetching bonuses:', error);
     throw error;
   }
 
-  return data || [];
+  return (data || []).map(toCamelCaseBonus);
 };
 
 // Get bonuses for a specific employee
@@ -292,14 +310,15 @@ export const getEmployeeBonuses = async (employeeId: string): Promise<Bonus[]> =
     const { data, error } = await supabase
       .from('bonuses')
       .select('*')
-      .eq('employee_id', employeeId);
+      .eq('employee_id', employeeId)
+      .order('date', { ascending: false });
 
     if (error) {
       console.error('Error fetching employee bonuses:', error);
       throw error;
     }
 
-    return data || [];
+    return (data || []).map(toCamelCaseBonus);
   } catch (error) {
     console.error('Error getting employee bonuses:', error);
     return [];
@@ -308,9 +327,11 @@ export const getEmployeeBonuses = async (employeeId: string): Promise<Bonus[]> =
 
 // Add a new bonus
 export const addBonus = async (bonus: Omit<Bonus, "id">): Promise<Bonus> => {
+  const dbBonus = toSnakeCaseBonus(bonus);
+  
   const { data, error } = await supabase
     .from('bonuses')
-    .insert([bonus])
+    .insert([dbBonus])
     .select()
     .single();
 
@@ -319,7 +340,7 @@ export const addBonus = async (bonus: Omit<Bonus, "id">): Promise<Bonus> => {
     throw error;
   }
 
-  return data;
+  return toCamelCaseBonus(data);
 };
 
 // Calculate total bonuses for an employee
@@ -364,10 +385,13 @@ export const countPaidMonths = async (employeeId: string): Promise<number> => {
 
 // Update a bonus
 export const updateBonus = async (bonus: Bonus): Promise<Bonus | null> => {
+  const { id, ...bonusWithoutId } = bonus;
+  const dbBonus = toSnakeCaseBonus(bonusWithoutId);
+  
   const { data, error } = await supabase
     .from('bonuses')
-    .update(bonus)
-    .eq('id', bonus.id)
+    .update(dbBonus)
+    .eq('id', id)
     .select()
     .single();
 
@@ -376,7 +400,7 @@ export const updateBonus = async (bonus: Bonus): Promise<Bonus | null> => {
     throw error;
   }
 
-  return data;
+  return toCamelCaseBonus(data);
 };
 
 // Delete a bonus

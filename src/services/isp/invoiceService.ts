@@ -289,3 +289,67 @@ export const generateSeparateInvoices = async (customerData: CustomerData, items
     throw error;
   }
 };
+
+// Helper to convert database snake_case to application camelCase for Invoice
+const toCamelCaseInvoice = (data: any): Invoice => ({
+  id: data.id,
+  customerId: data.customer_id,
+  customerName: data.customer_name,
+  customerEmail: data.customer_email,
+  customerPhone: data.customer_phone || '',
+  customerAddress: data.customer_address || '',
+  items: data.items || [],
+  subtotal: parseFloat(data.subtotal),
+  tax: parseFloat(data.tax),
+  total: parseFloat(data.total),
+  status: data.status,
+  createdAt: data.created_at,
+  updatedAt: data.updated_at,
+  type: data.type,
+  date: data.date,
+  dueDate: data.due_date,
+  notes: data.notes || undefined,
+});
+
+// Get recent invoices
+export const getRecentInvoices = async (limit: number = 10): Promise<Invoice[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('invoices')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('Error fetching recent invoices:', error);
+      throw error;
+    }
+
+    return (data || []).map(toCamelCaseInvoice);
+  } catch (error) {
+    console.error('Error getting recent invoices:', error);
+    throw error;
+  }
+};
+
+// Update invoice status
+export const updateInvoiceStatus = async (invoiceId: string, status: 'pending' | 'paid' | 'cancelled'): Promise<Invoice> => {
+  try {
+    const { data, error } = await supabase
+      .from('invoices')
+      .update({ status })
+      .eq('id', invoiceId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating invoice status:', error);
+      throw error;
+    }
+
+    return toCamelCaseInvoice(data);
+  } catch (error) {
+    console.error('Error updating invoice status:', error);
+    throw error;
+  }
+};

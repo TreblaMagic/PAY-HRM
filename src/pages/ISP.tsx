@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Settings } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { formatCurrency } from '@/utils/formatters';
 import { 
   Invoice, 
   Equipment, 
@@ -24,6 +25,7 @@ import {
   generateInvoice, 
   generateSeparateInvoices
 } from '@/services/isp';
+import { getRecentInvoices } from '@/services/isp/invoiceService';
 import { supabase } from '@/lib/supabaseClient';
 
 const ISP = () => {
@@ -32,11 +34,21 @@ const ISP = () => {
   const [setupCosts, setSetupCosts] = useState<SetupCost[]>([]);
   const [managedServices, setManagedServices] = useState<ManagedService[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [recentInvoices, setRecentInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   
   const { toast } = useToast();
   const navigate = useNavigate();
   
+  const loadRecentInvoices = async () => {
+    try {
+      const invoices = await getRecentInvoices(10);
+      setRecentInvoices(invoices);
+    } catch (error) {
+      console.error('Error loading recent invoices:', error);
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -51,6 +63,7 @@ const ISP = () => {
         setInternetSpeeds(speedsData);
         setSetupCosts(setupData);
         setManagedServices(servicesData);
+        await loadRecentInvoices();
         setLoading(false);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -134,6 +147,7 @@ const ISP = () => {
 
       const invoice = await generateInvoice(customerData, items);
       setInvoices([invoice]);
+      await loadRecentInvoices(); // Refresh recent invoices
       toast({
         title: "Success",
         description: "Invoice generated successfully",
@@ -216,6 +230,7 @@ const ISP = () => {
 
       const generatedInvoices = await generateSeparateInvoices(customerData, items);
       setInvoices([generatedInvoices.baseInvoice, generatedInvoices.markupInvoice]);
+      await loadRecentInvoices(); // Refresh recent invoices
       toast({
         title: "Success",
         description: "Separate invoices generated successfully",
@@ -230,8 +245,27 @@ const ISP = () => {
     }
   };
   
-  const handleCloseInvoice = () => {
+  const handleCloseInvoice = async () => {
     setInvoices([]);
+    await loadRecentInvoices(); // Refresh recent invoices when closing preview
+  };
+
+  const handleInvoiceUpdate = async () => {
+    // Refresh the currently displayed invoices if they exist
+    if (invoices.length > 0) {
+      try {
+        const updatedInvoices = await Promise.all(
+          invoices.map(async (invoice) => {
+            const recent = await getRecentInvoices(100);
+            return recent.find(inv => inv.id === invoice.id) || invoice;
+          })
+        );
+        setInvoices(updatedInvoices.filter(Boolean) as Invoice[]);
+      } catch (error) {
+        console.error('Error refreshing invoices:', error);
+      }
+    }
+    await loadRecentInvoices(); // Also refresh the recent invoices list
   };
   
   const goToSettings = () => {
@@ -263,7 +297,11 @@ const ISP = () => {
         </div>
         
         {invoices.length > 0 ? (
-          <InvoicePreview invoices={invoices} onClose={handleCloseInvoice} />
+          <InvoicePreview 
+            invoices={invoices} 
+            onClose={handleCloseInvoice}
+            onInvoiceUpdate={handleInvoiceUpdate}
+          />
         ) : (
           <div className="grid grid-cols-1 gap-8">
             <ServiceSetupForm
@@ -281,9 +319,43 @@ const ISP = () => {
                 <CardDescription>View and manage your recently created invoices</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8 text-gray-500">
-                  No recent invoices. Create a new invoice using the form above.
-                </div>
+                {recentInvoices.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    No recent invoices. Create a new invoice using the form above.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {recentInvoices.map((invoice) => (
+                      <div
+                        key={invoice.id}
+                        className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                        onClick={() => setInvoices([invoice])}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="font-medium">{invoice.customerName}</div>
+                            <div className="text-sm text-gray-500">{invoice.customerEmail}</div>
+                            <div className="text-xs text-gray-400 mt-1">
+                              {new Date(invoice.date).toLocaleDateString()} • {invoice.type}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-semibold">{formatCurrency(invoice.total)}</div>
+                            <div className={`text-xs px-2 py-1 rounded-full inline-block mt-1 ${
+                              invoice.status === 'paid' 
+                                ? 'bg-green-100 text-green-800' 
+                                : invoice.status === 'cancelled'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {invoice.status}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

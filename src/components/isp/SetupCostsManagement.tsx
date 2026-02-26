@@ -91,7 +91,7 @@ export const SetupCostsManagement = ({
               <p className="text-sm text-muted-foreground mb-2">{cost.description}</p>
               <div className="text-sm">
                 <span className="font-medium">Price:</span>
-                <span className="ml-2">₦{cost.price}</span>
+                <span className="ml-2">${cost.price}</span>
               </div>
             </CardContent>
           </Card>

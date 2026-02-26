@@ -1,14 +1,14 @@
 /**
- * Format a number as currency (Naira)
+ * Format a number as currency (USD)
  */
 export const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('en-NG', {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'NGN',
+    currency: 'USD',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
     currencyDisplay: 'symbol'
-  }).format(amount).replace('NGN', '₦');
+  }).format(amount);
 };
 
 /**

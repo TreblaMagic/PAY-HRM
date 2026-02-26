@@ -38,15 +38,7 @@ const initializeAttendance = (): void => {
 export const getAllAttendance = async (): Promise<AttendanceRecord[]> => {
   const { data, error } = await supabase
     .from('attendance')
-    .select(`
-      id,
-      employee_id,
-      date,
-      status,
-      employees (
-        name
-      )
-    `)
+    .select('id, employee_id, date, status')
     .order('date', { ascending: false });
 
   if (error) {
@@ -54,10 +46,23 @@ export const getAllAttendance = async (): Promise<AttendanceRecord[]> => {
     throw error;
   }
 
+  if (!data || data.length === 0) {
+    return [];
+  }
+
+  // Fetch employee names separately
+  const employeeIds = [...new Set(data.map(r => r.employee_id))];
+  const { data: employees } = await supabase
+    .from('employees')
+    .select('id, name')
+    .in('id', employeeIds);
+
+  const employeeMap = new Map(employees?.map(e => [e.id, e.name]) || []);
+
   return data.map(record => ({
     id: record.id,
     employeeId: record.employee_id,
-    employeeName: record.employees.name,
+    employeeName: employeeMap.get(record.employee_id) || 'Unknown',
     date: new Date(record.date),
     status: record.status as AttendanceStatus
   }));
@@ -69,15 +74,7 @@ export const getAttendanceByDateRange = async (startDate: Date, endDate: Date): 
   
   const { data, error } = await supabase
     .from('attendance')
-    .select(`
-      id,
-      employee_id,
-      date,
-      status,
-      employees (
-        name
-      )
-    `)
+    .select('id, employee_id, date, status')
     .gte('date', startDate.toISOString().split('T')[0])
     .lte('date', endDate.toISOString().split('T')[0])
     .order('date', { ascending: false });
@@ -87,10 +84,23 @@ export const getAttendanceByDateRange = async (startDate: Date, endDate: Date): 
     throw error;
   }
 
+  if (!data || data.length === 0) {
+    return [];
+  }
+
+  // Fetch employee names separately
+  const employeeIds = [...new Set(data.map(r => r.employee_id))];
+  const { data: employees } = await supabase
+    .from('employees')
+    .select('id, name')
+    .in('id', employeeIds);
+
+  const employeeMap = new Map(employees?.map(e => [e.id, e.name]) || []);
+
   return data.map(record => ({
     id: record.id,
     employeeId: record.employee_id,
-    employeeName: record.employees.name,
+    employeeName: employeeMap.get(record.employee_id) || 'Unknown',
     date: new Date(record.date),
     status: record.status as AttendanceStatus
   }));
@@ -105,15 +115,7 @@ export const addAttendance = async (record: Omit<AttendanceRecord, "id">): Promi
       date: record.date.toISOString().split('T')[0],
       status: record.status
     }])
-    .select(`
-      id,
-      employee_id,
-      date,
-      status,
-      employees (
-        name
-      )
-    `)
+    .select('id, employee_id, date, status')
     .single();
 
   if (error) {
@@ -121,10 +123,17 @@ export const addAttendance = async (record: Omit<AttendanceRecord, "id">): Promi
     throw error;
   }
 
+  // Fetch employee name separately
+  const { data: employee } = await supabase
+    .from('employees')
+    .select('name')
+    .eq('id', data.employee_id)
+    .single();
+
   return {
     id: data.id,
     employeeId: data.employee_id,
-    employeeName: data.employees.name,
+    employeeName: employee?.name || record.employeeName || 'Unknown',
     date: new Date(data.date),
     status: data.status as AttendanceStatus
   };

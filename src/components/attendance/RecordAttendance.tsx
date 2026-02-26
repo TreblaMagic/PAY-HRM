@@ -30,7 +30,7 @@ import { toast } from "@/components/ui/use-toast";
 
 interface RecordAttendanceProps {
   employees: Employee[];
-  onAddAttendance: (record: AttendanceRecord) => void;
+  onAddAttendance: (record: Omit<AttendanceRecord, "id">) => void;
 }
 
 export function RecordAttendance({ employees, onAddAttendance }: RecordAttendanceProps) {
@@ -51,8 +51,7 @@ export function RecordAttendance({ employees, onAddAttendance }: RecordAttendanc
     const selectedEmployee = employees.find(emp => emp.id === selectedEmployeeId);
     if (!selectedEmployee) return;
 
-    const newRecord: AttendanceRecord = {
-      id: Date.now().toString(),
+    const newRecord: Omit<AttendanceRecord, "id"> = {
       employeeId: selectedEmployeeId,
       employeeName: selectedEmployee.name,
       date: attendanceDate,
